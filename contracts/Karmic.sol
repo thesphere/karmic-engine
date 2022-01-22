@@ -4,11 +4,19 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Karmic {
-    address[] private _tokens;
+    address[] private _boxTokens;
 
-    function addTokens(address[] memory tokens) external {
+    function addBoxTokens(address[] memory tokens) external {
         for(uint8 i; i< tokens.length; i++) {
-            _tokens.push(tokens[i]);
+            _boxTokens.push(tokens[i]);
+        }
+    }
+
+    function getBoxTokens() external view returns (address[] memory boxTokens){
+        boxTokens = new address[](_boxTokens.length);
+
+        for(uint8 i; i < _boxTokens.length; i++) {
+            boxTokens[i] = _boxTokens[i];
         }
     }
 }
