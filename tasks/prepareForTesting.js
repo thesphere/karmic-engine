@@ -1,6 +1,12 @@
 const { task } = require("hardhat/config");
 const { ethers } = require("ethers");
 
+/*
+  deploys three test tokens
+  mints 1000 units of each test token to address of recipient
+  adds token addresses to karmic 
+*/
+
 const TOKENS = 3;
 const AMOUNT = ethers.utils.parseEther("1000");
 
