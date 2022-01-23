@@ -33,10 +33,13 @@ describe("Karmic", () => {
   describe("#addBoxTokens", () => {
     let expectedAddresses, expectedUris;
 
+    beforeEach(async () => {
+      expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
+      expectedUris = boxTokens.map((boxToken, idx) => `boxToken${idx + 1}`);
+    });
+
     context("when all conditions are fulfilled (happy path)", () => {
       beforeEach(async () => {
-        expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
-        expectedUris = boxTokens.map((boxToken, idx) => `boxToken${idx + 1}`);
         await karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
       });
 
@@ -55,15 +58,21 @@ describe("Karmic", () => {
 
     context("when boxToken exists already", () => {
       beforeEach(async () => {
-        expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
-        expectedUris = boxTokens.map((boxToken, idx) => `boxToken${idx + 1}`);
-
         await karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
       });
 
       it("reverts 'DUPLICATE_TOKEN'", async () => {
         const tx = karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
         await expect(tx).to.be.revertedWith("DUPLICATE_TOKEN");
+      });
+    });
+
+    context("when called by non-owner", () => {
+      it("reverts 'Ownable: caller is not the owner'", async () => {
+        const tx = karmicInstance
+          .connect(alice)
+          .addBoxTokens(expectedAddresses, expectedUris);
+        await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
       });
     });
   });
