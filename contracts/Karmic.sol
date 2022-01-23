@@ -8,10 +8,14 @@ import "./Badger.sol";
 contract Karmic is Badger{
     address[] private _boxTokens;
 
-    function addBoxTokens(address[] memory tokens) external onlyOwner {
+    constructor(string memory _newBaseUri) Badger(_newBaseUri) {}
+
+    function addBoxTokens(address[] memory tokens, string[] calldata tierUris) external onlyOwner {
         for(uint8 i; i< tokens.length; i++) {
-            // check for duplicates
+            // TODO: check for duplicates
+
             _boxTokens.push(tokens[i]);
+            createTokenTier(_boxTokens.length, tierUris[i], false);
         }
     }
 

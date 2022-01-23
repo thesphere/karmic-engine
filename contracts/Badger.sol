@@ -79,7 +79,7 @@ contract Badger is Ownable, ERC1155 {
         Constructor
     */
 
-    constructor() ERC1155("") {}
+    constructor(string memory _newBaseUri) ERC1155(_newBaseUri) {}
 
     /*
         Minting & burning
