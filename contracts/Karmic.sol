@@ -6,27 +6,36 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Badger.sol";
 
 contract Karmic is Badger{
-    address[] private _boxTokens;
+    mapping(address => uint256) private boxTokenTiers;
+    uint256 boxTokenCounter;
 
     constructor(string memory _newBaseUri) Badger(_newBaseUri) {}
 
     function addBoxTokens(address[] memory tokens, string[] calldata tierUris) external onlyOwner {
+        uint256 counter = boxTokenCounter;
+
         for(uint8 i; i< tokens.length; i++) {
-            // check for duplicate
-            for(uint8 j; j < _boxTokens.length; j++) {
-                require(_boxTokens[j] != tokens[i], "DUPLICATE_TOKEN");
-            }
-            _boxTokens.push(tokens[i]);
-            // create token tier
-            createTokenTier(_boxTokens.length, tierUris[i], false);
+            address token = tokens[i];
+            require(boxTokenTiers[token] == 0, "DUPLICATE_TOKEN");
+            boxTokenTiers[token] = counter + 1;
+            createTokenTier(counter + 1, tierUris[i], false, token);
+            counter++;
         }
+
+        boxTokenCounter = counter;
     }
 
     function getBoxTokens() external view returns (address[] memory boxTokens){
-        boxTokens = new address[](_boxTokens.length);
-        for(uint8 i; i < _boxTokens.length; i++) {
-            boxTokens[i] = _boxTokens[i];
+        boxTokens = new address[](boxTokenCounter);
+        for(uint8 i = 1; i <= boxTokenCounter; i++) {
+            boxTokens[i-1] = tokenTiers[i].boxToken;
         }
     }
 
+    function claimGovernanceTokens(address[] memory boxTokens) external {
+        for(uint8 i; i < boxTokens.length; i++) {
+            uint256 balance = IERC20(boxTokens[i]).balanceOf(msg.sender);
+            
+        }
+    }
 }

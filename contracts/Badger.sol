@@ -23,13 +23,14 @@ contract Badger is Ownable, ERC1155 {
     struct TokenTier {
         string uriId;
         bool transferable;
+        address boxToken;
     }
 
     /*
         Events
     */
 
-    event TierChange(uint256 indexed tokenId, string uriId, bool transferable);
+    event TierChange(uint256 indexed tokenId, string uriId, bool transferables);
 
     /*
         Modifiers
@@ -217,14 +218,15 @@ contract Badger is Ownable, ERC1155 {
     function createTokenTier(
         uint256 tokenId,
         string calldata uriId,
-        bool transferable
+        bool transferable,
+        address boxToken
     ) public onlyOwner isValidString(uriId) {
         require(
             _isEmptyString(tokenTiers[tokenId].uriId),
             "Tier already exists for tokenId"
         );
 
-        tokenTiers[tokenId] = TokenTier(uriId, transferable);
+        tokenTiers[tokenId] = TokenTier(uriId, transferable, boxToken);
         emit TierChange(tokenId, uriId, transferable);
     }
 
