@@ -120,6 +120,14 @@ describe("Karmic", () => {
         expect(firstGovTokenAmount).to.equal(firstAmountBoxTokens);
         expect(secondGovTokenAmount).to.equal(secondAmountBoxTokens);
       });
+
+      it("removes the box tokens from alice", async () => {
+        const amountBoxTokens1 = await boxTokens[0].balanceOf(alice.address);
+        const amountBoxTokens2 = await boxTokens[1].balanceOf(alice.address);
+
+        expect(amountBoxTokens1).to.equal(0);
+        expect(amountBoxTokens2).to.equal(0);
+      });
     });
   });
 });
