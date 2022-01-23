@@ -13,7 +13,9 @@ contract Karmic is Badger{
     function addBoxTokens(address[] memory tokens, string[] calldata tierUris) external onlyOwner {
         for(uint8 i; i< tokens.length; i++) {
             // TODO: check for duplicates
-
+            for(uint8 j; j < _boxTokens.length; j++) {
+                require(_boxTokens[j] != tokens[i], "DUPLICATE_TOKEN");
+            }
             _boxTokens.push(tokens[i]);
             createTokenTier(_boxTokens.length, tierUris[i], false);
         }

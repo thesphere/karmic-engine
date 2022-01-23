@@ -52,5 +52,19 @@ describe("Karmic", () => {
         });
       }
     });
+
+    context("when boxToken exists already", () => {
+      beforeEach(async () => {
+        expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
+        expectedUris = boxTokens.map((boxToken, idx) => `boxToken${idx + 1}`);
+
+        await karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
+      });
+
+      it("reverts 'DUPLICATE_TOKEN'", async () => {
+        const tx = karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
+        await expect(tx).to.be.revertedWith("DUPLICATE_TOKEN");
+      });
+    });
   });
 });
