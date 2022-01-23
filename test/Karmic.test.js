@@ -76,4 +76,50 @@ describe("Karmic", () => {
       });
     });
   });
+
+  describe("#claimGovernanceTokens", () => {
+    const firstAmountBoxTokens = ethers.utils.parseEther("50");
+    const secondAmountBoxTokens = ethers.utils.parseEther("100");
+
+    context("when all conditions are fulfilled (happy path)", () => {
+      beforeEach("add box tokens to Karmic", async () => {
+        const expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
+        const expectedUris = boxTokens.map(
+          (boxToken, idx) => `boxToken${idx + 1}`
+        );
+        await karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
+      });
+
+      beforeEach("mint box tokens to alice and approve Karmic", async () => {
+        await boxTokens[0].mint(alice.address, firstAmountBoxTokens);
+        await boxTokens[0]
+          .connect(alice)
+          .approve(karmicInstance.address, firstAmountBoxTokens);
+        await boxTokens[1].mint(alice.address, secondAmountBoxTokens);
+        await boxTokens[1]
+          .connect(alice)
+          .approve(karmicInstance.address, secondAmountBoxTokens);
+      });
+
+      beforeEach("call claimGovernanceTokens", async () => {
+        await karmicInstance
+          .connect(alice)
+          .claimGovernanceTokens([boxTokens[0].address, boxTokens[1].address]);
+      });
+
+      it("mints the correct amount of gov tokens to alice", async () => {
+        const firstGovTokenAmount = await karmicInstance.balanceOf(
+          alice.address,
+          1
+        );
+        const secondGovTokenAmount = await karmicInstance.balanceOf(
+          alice.address,
+          2
+        );
+
+        expect(firstGovTokenAmount).to.equal(firstAmountBoxTokens);
+        expect(secondGovTokenAmount).to.equal(secondAmountBoxTokens);
+      });
+    });
+  });
 });

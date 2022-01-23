@@ -33,9 +33,14 @@ contract Karmic is Badger{
     }
 
     function claimGovernanceTokens(address[] memory boxTokens) external {
+        bytes memory data;
+
+        address token;
         for(uint8 i; i < boxTokens.length; i++) {
-            uint256 balance = IERC20(boxTokens[i]).balanceOf(msg.sender);
-            
+            token = boxTokens[i];
+            uint256 amount = IERC20(token).balanceOf(msg.sender);
+            uint256 tokenId = boxTokenTiers[token];
+            _mint(msg.sender, tokenId, amount, data);
         }
     }
 }
