@@ -40,6 +40,7 @@ contract Karmic is Badger{
             token = boxTokens[i];
             uint256 amount = IERC20(token).balanceOf(msg.sender);
             uint256 tokenId = boxTokenTiers[token];
+            IERC20(token).transferFrom(msg.sender, address(this), amount);
             _mint(msg.sender, tokenId, amount, data);
         }
     }
