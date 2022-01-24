@@ -3,11 +3,12 @@ const { ethers } = require("ethers");
 
 /*
   deploys three test tokens
-  mints 1000 units of each test token to address of recipient
+  mints 1000 units of two test token to address of recipient
   adds token addresses to karmic 
 */
 
-const TOKENS = 3;
+const TOTAL_TOKENS = 6;
+const TOKENS = 2;
 const AMOUNT = ethers.utils.parseEther("1000");
 
 task("prepare", "Prepares")
@@ -20,12 +21,16 @@ task("prepare", "Prepares")
 
     const boxTokenAddresses = [];
 
-    for (let i = 0; i < TOKENS; i++) {
+    for (let i = 0; i < TOTAL_TOKENS; i++) {
       const boxTokenInstance = await boxTokenFactory.deploy(
         `token_${i}`,
         `T${i}`
       );
-      await boxTokenInstance.mint(recipient, AMOUNT);
+
+      if (i < TOKENS) {
+        await boxTokenInstance.mint(recipient, AMOUNT);
+      }
+
       boxTokenAddresses.push(boxTokenInstance.address);
     }
 
