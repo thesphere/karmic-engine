@@ -17,9 +17,11 @@ task("prepare", "Prepares")
     const [deployer] = await hre.ethers.getSigners();
 
     const boxTokenFactory = await hre.ethers.getContractFactory("BoxToken");
+
     const karmicInstance = await hre.ethers.getContract("Karmic");
 
     const boxTokenAddresses = [];
+    const boxTokenMetadataUris = [];
 
     for (let i = 0; i < TOTAL_TOKENS; i++) {
       const boxTokenInstance = await boxTokenFactory.deploy(
@@ -32,9 +34,10 @@ task("prepare", "Prepares")
       }
 
       boxTokenAddresses.push(boxTokenInstance.address);
+      boxTokenMetadataUris.push(`meta${i + 1}`);
     }
 
-    await karmicInstance.addBoxTokens(boxTokenAddresses);
+    await karmicInstance.addBoxTokens(boxTokenAddresses, boxTokenMetadataUris);
 
-    console.log(await karmicInstance.getBoxTokens());
+    console.log("contracts were prepared for testing");
   });
