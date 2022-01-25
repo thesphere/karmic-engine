@@ -26,6 +26,7 @@ contract Karmic is Badger{
     constructor(string memory _newBaseUri, uint256 _threshold) Badger(_newBaseUri) {
         boxTokenCounter = 1;
         threshold = _threshold;
+        createTokenTier(0, _newBaseUri, false, address(0));
     }
 
     fallback() external payable {

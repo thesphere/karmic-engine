@@ -57,7 +57,7 @@ contract Badger is Ownable, ERC1155 {
         _;
     }
 
-    modifier isValidString(string calldata uriId) {
+    modifier isValidString(string memory uriId) {
         require(!_isEmptyString(uriId), "String cannot be empty");
         _;
     }
@@ -217,7 +217,7 @@ contract Badger is Ownable, ERC1155 {
      */
     function createTokenTier(
         uint256 tokenId,
-        string calldata uriId,
+        string memory uriId,
         bool transferable,
         address boxToken
     ) public onlyOwner isValidString(uriId) {
