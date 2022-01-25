@@ -35,7 +35,7 @@ describe("Karmic", () => {
 
     beforeEach(async () => {
       expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
-      expectedUris = boxTokens.map((boxToken, idx) => `boxToken${idx + 1}`);
+      expectedUris = boxTokens.map((boxToken, idx) => `boxToken${idx+1}`);
     });
 
     context("when all conditions are fulfilled (happy path)", () => {
@@ -45,7 +45,7 @@ describe("Karmic", () => {
 
       it("stores the tokens on the contract", async () => {
         const tokens = await karmicInstance.getBoxTokens();
-        expect(tokens).to.eql(boxTokens.map((boxToken) => boxToken.address));
+        expect(tokens).to.eql(boxTokens.map((boxToken) => boxToken.address).concat(['0x0000000000000000000000000000000000000000']));
       });
 
       for (let i = 1; i <= NUMBER_BOX_TOKENS; i++) {
@@ -86,7 +86,7 @@ describe("Karmic", () => {
       beforeEach("add box tokens to Karmic", async () => {
         const expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
         const expectedUris = boxTokens.map(
-          (boxToken, idx) => `boxToken${idx + 1}`
+          (boxToken, idx) => `boxToken${idx}`
         );
         await karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
       });
@@ -96,14 +96,29 @@ describe("Karmic", () => {
         await boxTokens[0]
           .connect(alice)
           .approve(karmicInstance.address, firstAmountBoxTokens);
+        await alice.sendTransaction({
+          to:  boxTokens[0].address,
+          value: ethers.utils.parseEther("1"),
+        });
         await boxTokens[1].mint(alice.address, secondAmountBoxTokens);
         await boxTokens[1]
           .connect(alice)
           .approve(karmicInstance.address, secondAmountBoxTokens);
+        await alice.sendTransaction({
+          to:  boxTokens[1].address,
+          value: ethers.utils.parseEther("1.5"),
+        });
         await boxTokens[2].mint(alice.address, thirdAmountBoxTokens);
         await boxTokens[2]
             .connect(alice)
             .approve(karmicInstance.address, thirdAmountBoxTokens);
+        await alice.sendTransaction({
+          to:  boxTokens[2].address,
+          value: ethers.utils.parseEther("2"),
+        });
+        await boxTokens[0].pay(karmicInstance.address, ethers.utils.parseEther("1"));
+        await boxTokens[1].pay(karmicInstance.address, ethers.utils.parseEther("1.5"));
+        await boxTokens[2].pay(karmicInstance.address, ethers.utils.parseEther("2"));
       });
 
 
@@ -129,17 +144,24 @@ describe("Karmic", () => {
           alice.address,
           2
         );
+        const thirdGovTokenAmount = await karmicInstance.balanceOf(
+          alice.address,
+          3
+        );
 
         expect(firstGovTokenAmount).to.equal(firstAmountBoxTokens);
         expect(secondGovTokenAmount).to.equal(secondAmountBoxTokens);
+        expect(thirdGovTokenAmount).to.equal(thirdGovTokenAmount);
       });
 
       it("removes the box tokens from alice", async () => {
         const amountBoxTokens1 = await boxTokens[0].balanceOf(alice.address);
         const amountBoxTokens2 = await boxTokens[1].balanceOf(alice.address);
+        const amountBoxTokens3 = await boxTokens[2].balanceOf(alice.address);
 
         expect(amountBoxTokens1).to.equal(0);
         expect(amountBoxTokens2).to.equal(0);
+        expect(amountBoxTokens3).to.equal(0);
       });
     });
   });

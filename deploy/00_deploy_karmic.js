@@ -3,10 +3,11 @@ const deployFunction = async ({ getSigners, deployments, ethers }) => {
   const [deployer] = await ethers.getSigners();
 
   const baseUri = "www.sphere.com/";
+  const minimalThreshold = ethers.BigNumber.from('100');
 
   await deploy("Karmic", {
     from: deployer.address,
-    args: [baseUri],
+    args: [baseUri, minimalThreshold],
     log: true,
   });
 };

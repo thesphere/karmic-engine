@@ -23,14 +23,15 @@ contract Karmic is Badger{
     }
 
 
-    constructor(string memory _newBaseUri) Badger(_newBaseUri) {
+    constructor(string memory _newBaseUri, uint256 _threshold) Badger(_newBaseUri) {
         boxTokenCounter = 1;
+        threshold = _threshold;
     }
 
     fallback() external payable {
         boxTokenTiers[msg.sender].amount = ERC20(msg.sender).totalSupply();
         boxTokenTiers[msg.sender].funds = msg.value;
-        boxTokenTiers[msg.sender].passedThreshold = msg.value > threshold;
+        boxTokenTiers[msg.sender].passedThreshold = msg.value >= threshold;
     }
 
     function bondToMint(address token, uint256 amount) public isBoxToken(token) {
@@ -52,8 +53,8 @@ contract Karmic is Badger{
         for(uint8 i; i< tokens.length; i++) {
             address token = tokens[i];
             require(boxTokenTiers[token].id == 0, "DUPLICATE_TOKEN");
-            boxTokenTiers[token].id = counter + 1;
-            createTokenTier(counter + 1, tierUris[i], false, token);
+            boxTokenTiers[token].id = counter;
+            createTokenTier(counter, tierUris[i], false, token);
             counter++;
         }
 
@@ -67,15 +68,15 @@ contract Karmic is Badger{
         }
     }
 
-    function withdraw(address token, uint256 amount) external view{
+    function withdraw(address token, uint256 amount) external{
         require(!boxTokenTiers[token].passedThreshold,
-            "Can withdraw only funds for tokens that didn't pass threshold")
-        uint256 withdrawnFunds = amount * boxTokenTiers[token].funds / boxTokenTiers[token].amount ;
+            "Can withdraw only funds for tokens that didn't pass threshold");
+        uint256 withdrawnFunds = amount * boxTokenTiers[token].funds / boxTokenTiers[token].amount;
         boxTokenTiers[token].amount -= amount;
-        boxTokenTiers[token].value -= withdrawnFunds;
+        boxTokenTiers[token].funds -= withdrawnFunds;
         require(ERC20(token).transferFrom(msg.sender, address(this), amount),
             "Failed to withdraw stakeholder's ERC20 tokens");
-        transfer(withdrawnFunds, msg.sender);
+        payable(msg.sender).transfer(withdrawnFunds);
     }
 
 
@@ -84,8 +85,8 @@ contract Karmic is Badger{
 
         address token;
         for(uint8 i; i < boxTokens.length; i++) {
-            token = boxTokens[i]
-            uint256 amount = IERC20(token).balanceOf(msg.sender)
+            token = boxTokens[i];
+            uint256 amount = IERC20(token).balanceOf(msg.sender);
             boxTokenTiers[token].amount -= amount;
             uint256 tokenId = boxTokenTiers[token].id;
             IERC20(token).transferFrom(msg.sender, address(this), amount);
