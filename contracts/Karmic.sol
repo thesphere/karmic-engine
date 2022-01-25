@@ -25,7 +25,7 @@ contract Karmic is Badger{
         boxTokenCounter = counter;
     }
 
-    function getBoxTokens() public view returns (address[] memory boxTokens){
+    function getBoxTokens() external view returns (address[] memory boxTokens){
         boxTokens = new address[](boxTokenCounter);
         for(uint8 i = 1; i <= boxTokenCounter; i++) {
             boxTokens[i-1] = tokenTiers[i].boxToken;
@@ -44,11 +44,4 @@ contract Karmic is Badger{
             _mint(msg.sender, tokenId, amount, data);
         }
     }
-
-    function allBalancesOf(address holder) external view returns (uint256[] memory balances) {
-        balances = new uint256[](boxTokenCounter);
-        for(uint8 i; i < boxTokenCounter; i++) {
-            balances[i] = balanceOf(holder, i + 1);
-        }
-    } 
 }
