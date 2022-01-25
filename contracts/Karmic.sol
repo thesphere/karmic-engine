@@ -21,13 +21,12 @@ contract Karmic is Badger{
     }
 
 
-
     constructor(string memory _newBaseUri) Badger(_newBaseUri) {
         boxTokenCounter = 1;
     }
 
     fallback() external payable {
-        boxTokenTiers[msg.sender].amount = msg.value;
+        boxTokenTiers[msg.sender].amount = ERC20(msg.sender).totalSupply();
     }
 
     function bondToMint(address token, uint256 amount) public isBoxToken(token) {
