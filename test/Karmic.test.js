@@ -80,6 +80,7 @@ describe("Karmic", () => {
   describe("#claimGovernanceTokens", () => {
     const firstAmountBoxTokens = ethers.utils.parseEther("50");
     const secondAmountBoxTokens = ethers.utils.parseEther("100");
+    const thirdAmountBoxTokens = ethers.utils.parseEther("150");
 
     context("when all conditions are fulfilled (happy path)", () => {
       beforeEach("add box tokens to Karmic", async () => {
@@ -99,13 +100,25 @@ describe("Karmic", () => {
         await boxTokens[1]
           .connect(alice)
           .approve(karmicInstance.address, secondAmountBoxTokens);
+        await boxTokens[2].mint(alice.address, thirdAmountBoxTokens);
+        await boxTokens[2]
+            .connect(alice)
+            .approve(karmicInstance.address, thirdAmountBoxTokens);
       });
+
 
       beforeEach("call claimGovernanceTokens", async () => {
         await karmicInstance
           .connect(alice)
           .claimGovernanceTokens([boxTokens[0].address, boxTokens[1].address]);
       });
+
+      beforeEach("call bondToMint", async () => {
+        await karmicInstance
+            .connect(alice)
+            .bondToMint(boxTokens[2].address, thirdAmountBoxTokens);
+      });
+
 
       it("mints the correct amount of gov tokens to alice", async () => {
         const firstGovTokenAmount = await karmicInstance.balanceOf(
