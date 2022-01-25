@@ -8,7 +8,7 @@ const { ethers } = require("ethers");
 */
 
 const TOTAL_TOKENS = 6;
-const TOKENS = 2;
+const TOKENS = 5;
 const AMOUNT = ethers.utils.parseEther("1000");
 
 task("prepare", "Prepares")
@@ -19,7 +19,6 @@ task("prepare", "Prepares")
     const boxTokenFactory = await hre.ethers.getContractFactory("BoxToken");
 
     const karmicInstance = await hre.ethers.getContract("Karmic");
-
     const boxTokenAddresses = [];
     const boxTokenMetadataUris = [];
 

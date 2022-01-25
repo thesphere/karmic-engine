@@ -15,6 +15,10 @@ module.exports = {
   networks: {
     hardhat: {
       saveDeployments: true,
+      mining: {
+        auto: false,
+        interval: 5000,
+      },
     },
   },
 };
