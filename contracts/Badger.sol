@@ -98,7 +98,7 @@ contract Badger is Ownable, ERC1155 {
         uint256 amount
     ) public onlyOwner {
         bytes memory data;
-
+        require(tokenTiers[id].boxToken == address(0), "Can mint only general tokens");
         _mint(account, id, amount, data);
     }
 
@@ -113,6 +113,7 @@ contract Badger is Ownable, ERC1155 {
         uint256 id,
         uint256 amount
     ) public onlyOwner {
+        require(tokenTiers[id].boxToken == address(0), "Can mint only general tokens");
         _burn(account, id, amount);
     }
 
@@ -131,6 +132,7 @@ contract Badger is Ownable, ERC1155 {
         bytes memory data;
 
         for (uint256 i = 0; i < accounts.length; i++) {
+            require(tokenTiers[tokenIds[i]].boxToken == address(0), "Can mint only general tokens");
             _mint(accounts[i], tokenIds[i], amounts[i], data);
         }
     }
@@ -148,6 +150,7 @@ contract Badger is Ownable, ERC1155 {
         uint256[] calldata amounts
     ) public onlyOwner isSameLength(accounts, tokenIds, amounts) {
         for (uint256 i = 0; i < accounts.length; i++) {
+            require(tokenTiers[tokenIds[i]].boxToken == address(0), "Can mint only general tokens");
             _burn(accounts[i], tokenIds[i], amounts[i]);
         }
     }

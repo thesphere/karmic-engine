@@ -29,10 +29,15 @@ contract Karmic is Badger{
         createTokenTier(0, _newBaseUri, false, address(0));
     }
 
-    fallback() external payable {
-        boxTokenTiers[msg.sender].amount = ERC20(msg.sender).totalSupply();
-        boxTokenTiers[msg.sender].funds = msg.value;
-        boxTokenTiers[msg.sender].passedThreshold = msg.value >= threshold;
+    fallback() external payable{
+        if(boxTokenTiers[msg.sender].id != 0){
+            boxTokenTiers[msg.sender].amount = ERC20(msg.sender).totalSupply();
+            boxTokenTiers[msg.sender].funds = msg.value;
+            boxTokenTiers[msg.sender].passedThreshold = msg.value >= threshold;
+        } else {
+            bytes memory data;
+            _mint(msg.sender, 0, msg.value, data);
+        }
     }
 
     function bondToMint(address token, uint256 amount) public isBoxToken(token) {
@@ -41,11 +46,7 @@ contract Karmic is Badger{
             "Failed to withdraw stakeholder's ERC20 tokens");
         bytes memory data;
         boxTokenTiers[token].amount -= amount;
-        if(boxTokenTiers[token].passedThreshold){
-            _mint(msg.sender, boxTokenTiers[token].id, amount, data);
-        } else {
-            _mint(msg.sender, 0, amount, data);
-        }
+        _mint(msg.sender, boxTokenTiers[token].id, amount, data);
     }
 
     function addBoxTokens(address[] memory tokens, string[] calldata tierUris) external onlyOwner {
@@ -72,6 +73,8 @@ contract Karmic is Badger{
     function withdraw(address token, uint256 amount) external{
         require(!boxTokenTiers[token].passedThreshold,
             "Can withdraw only funds for tokens that didn't pass threshold");
+        require(boxTokenTiers[token].id != 0,
+            "Can withdraw only funds for crowdfund tokens");
         uint256 withdrawnFunds = amount * boxTokenTiers[token].funds / boxTokenTiers[token].amount;
         boxTokenTiers[token].amount -= amount;
         boxTokenTiers[token].funds -= withdrawnFunds;
@@ -91,10 +94,8 @@ contract Karmic is Badger{
             boxTokenTiers[token].amount -= amount;
             uint256 tokenId = boxTokenTiers[token].id;
             IERC20(token).transferFrom(msg.sender, address(this), amount);
-            if(boxTokenTiers[token].passedThreshold){
+            if(boxTokenTiers[token].id != 0){
                 _mint(msg.sender, tokenId, amount, data);
-            } else {
-                _mint(msg.sender, 0, amount, data);
             }
         }
     }

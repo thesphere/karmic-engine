@@ -80,6 +80,7 @@ describe("Karmic", () => {
   describe("#claimGovernanceTokens", () => {
     const boxesAmounts = [ethers.utils.parseEther("50"), ethers.utils.parseEther("100"), ethers.utils.parseEther("150"), ethers.utils.parseEther("10")];
     const boxesPayments = [ethers.utils.parseEther("1"), ethers.utils.parseEther("1.5"), ethers.utils.parseEther("2"), ethers.utils.parseEther("0.5")];
+    const karmicDonation = ethers.utils.parseEther("4");
     let aliceBalanceBeforeWithdrawal;
     let aliceBalanceAfterWithdrawal;
 
@@ -104,6 +105,11 @@ describe("Karmic", () => {
           });
           await boxTokens[i].pay(karmicInstance.address, boxesPayments[i]);
         }
+        await alice.sendTransaction({
+          to: karmicInstance.address,
+          value: karmicDonation,
+        });
+
       });
 
       it("reverts 'Can withdraw only funds for tokens that didn't pass threshold'", async () => {
@@ -150,6 +156,10 @@ describe("Karmic", () => {
         );
         const fourthGovTokenAmount = await karmicInstance.balanceOf(
             alice.address,
+            4
+        );
+        const fifthGovTokenAmount = await karmicInstance.balanceOf(
+            alice.address,
             0
         );
 
@@ -157,6 +167,7 @@ describe("Karmic", () => {
         expect(secondGovTokenAmount).to.equal(boxesAmounts[1]);
         expect(thirdGovTokenAmount).to.equal(boxesAmounts[2]);
         expect(fourthGovTokenAmount).to.equal(boxesAmounts[3].div(2));
+        expect(fifthGovTokenAmount).to.equal(karmicDonation);
       });
 
       it("removes the box tokens from alice", async () => {
