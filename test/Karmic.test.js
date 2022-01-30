@@ -140,6 +140,11 @@ describe("Karmic", () => {
       })
 
 
+      it("can't mint box tokens", async () => {
+        await expect(karmicInstance.connect(deployer).mint(bob.address, 1, boxesAmounts[0])).to.be.revertedWith("Can mint only general tokens");
+      })
+
+
 
       it("mints the correct amount of gov tokens to alice", async () => {
         const firstGovTokenAmount = await karmicInstance.balanceOf(
@@ -169,6 +174,15 @@ describe("Karmic", () => {
         expect(fourthGovTokenAmount).to.equal(boxesAmounts[3].div(2));
         expect(fifthGovTokenAmount).to.equal(karmicDonation);
       });
+
+      it("mints general tokens", async () => {
+        await karmicInstance.connect(deployer).mint(alice.address, 0, boxesAmounts[0]);
+        const generalGovTokenAmount = await karmicInstance.balanceOf(
+            alice.address,
+            0
+        );
+        expect(BigInt(generalGovTokenAmount)).to.equal(BigInt(karmicDonation) + BigInt(boxesAmounts[0]));
+      })
 
       it("removes the box tokens from alice", async () => {
         const amountBoxTokens1 = await boxTokens[0].balanceOf(alice.address);
