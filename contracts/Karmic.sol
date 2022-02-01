@@ -8,13 +8,13 @@ import "./Badger.sol";
 contract Karmic is Badger{
     mapping(address => BoxToken) private boxTokenTiers;
     uint256 boxTokenCounter;
-    uint256 threshold;
 
     struct BoxToken{
         uint256 id;
         uint256 amount;
         uint256 funds;
         bool passedThreshold;
+        uint256 threshold;
     }
 
     modifier isBoxToken(address token){
@@ -23,9 +23,8 @@ contract Karmic is Badger{
     }
 
 
-    constructor(string memory _newBaseUri, uint256 _threshold) Badger(_newBaseUri) {
+    constructor(string memory _newBaseUri) Badger(_newBaseUri) {
         boxTokenCounter = 1;
-        threshold = _threshold;
         createTokenTier(0, _newBaseUri, false, address(0));
     }
 
@@ -33,7 +32,6 @@ contract Karmic is Badger{
         if(boxTokenTiers[msg.sender].id != 0){
             boxTokenTiers[msg.sender].amount = ERC20(msg.sender).totalSupply();
             boxTokenTiers[msg.sender].funds = msg.value;
-            boxTokenTiers[msg.sender].passedThreshold = msg.value >= threshold;
         } else {
             bytes memory data;
             _mint(msg.sender, 0, msg.value, data);
@@ -49,13 +47,14 @@ contract Karmic is Badger{
         _mint(msg.sender, boxTokenTiers[token].id, amount, data);
     }
 
-    function addBoxTokens(address[] memory tokens, string[] calldata tierUris) external onlyOwner {
+    function addBoxTokens(address[] memory tokens, string[] calldata tierUris, uint256[] calldata threshold) external onlyOwner {
         uint256 counter = boxTokenCounter;
 
         for(uint8 i; i< tokens.length; i++) {
             address token = tokens[i];
             require(boxTokenTiers[token].id == 0, "DUPLICATE_TOKEN");
             boxTokenTiers[token].id = counter;
+            boxTokenTiers[token].threshold = threshold[i];
             createTokenTier(counter, tierUris[i], false, token);
             counter++;
         }
@@ -71,13 +70,11 @@ contract Karmic is Badger{
     }
 
     function withdraw(address token, uint256 amount) external{
-        require(!boxTokenTiers[token].passedThreshold,
+        require(!(boxTokenTiers[token].funds >= boxTokenTiers[token].threshold),
             "Can withdraw only funds for tokens that didn't pass threshold");
         require(boxTokenTiers[token].id != 0,
             "Can withdraw only funds for crowdfund tokens");
         uint256 withdrawnFunds = amount * boxTokenTiers[token].funds / boxTokenTiers[token].amount;
-        boxTokenTiers[token].amount -= amount;
-        boxTokenTiers[token].funds -= withdrawnFunds;
         require(ERC20(token).transferFrom(msg.sender, address(this), amount),
             "Failed to withdraw stakeholder's ERC20 tokens");
         payable(msg.sender).transfer(withdrawnFunds);

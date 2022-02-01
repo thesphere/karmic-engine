@@ -11,23 +11,25 @@ const setupTest = deployments.createFixture(async ({ deployments, ethers }) => {
 
   const tokenFactory = await ethers.getContractFactory("BoxToken");
   const boxTokens = [];
+  const thresholds = [];
   for (let i = 0; i < NUMBER_BOX_TOKENS; i++) {
     const boxToken = await tokenFactory.deploy(`boxToken${i}`, `BT${1}`);
     boxTokens.push(boxToken);
+    thresholds.push(ethers.utils.parseEther("1"));
   }
 
-  return { karmicInstance, boxTokens };
+  return { karmicInstance, boxTokens, thresholds };
 });
 
 describe("Karmic", () => {
-  let karmicInstance, boxTokens, deployer, alice, bob;
+  let karmicInstance, boxTokens, thresholds, deployer, alice, bob;
 
   before("get array of signers", async () => {
     [deployer, alice, bob] = await ethers.getSigners();
   });
 
   beforeEach("setup fresh karmic contract", async () => {
-    ({ karmicInstance, boxTokens } = await setupTest());
+    ({ karmicInstance, boxTokens, thresholds } = await setupTest());
   });
 
   describe("#addBoxTokens", () => {
@@ -40,7 +42,7 @@ describe("Karmic", () => {
 
     context("when all conditions are fulfilled (happy path)", () => {
       beforeEach(async () => {
-        await karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
+        await karmicInstance.addBoxTokens(expectedAddresses, expectedUris, thresholds);
       });
 
       it("stores the tokens on the contract", async () => {
@@ -58,11 +60,11 @@ describe("Karmic", () => {
 
     context("when boxToken exists already", () => {
       beforeEach(async () => {
-        await karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
+        await karmicInstance.addBoxTokens(expectedAddresses, expectedUris, thresholds);
       });
 
       it("reverts 'DUPLICATE_TOKEN'", async () => {
-        const tx = karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
+        const tx = karmicInstance.addBoxTokens(expectedAddresses, expectedUris, thresholds);
         await expect(tx).to.be.revertedWith("DUPLICATE_TOKEN");
       });
     });
@@ -71,7 +73,7 @@ describe("Karmic", () => {
       it("reverts 'Ownable: caller is not the owner'", async () => {
         const tx = karmicInstance
           .connect(alice)
-          .addBoxTokens(expectedAddresses, expectedUris);
+          .addBoxTokens(expectedAddresses, expectedUris, thresholds);
         await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
       });
     });
@@ -90,7 +92,7 @@ describe("Karmic", () => {
         const expectedUris = boxTokens.map(
           (boxToken, idx) => `boxToken${idx}`
         );
-        await karmicInstance.addBoxTokens(expectedAddresses, expectedUris);
+        await karmicInstance.addBoxTokens(expectedAddresses, expectedUris, thresholds);
       });
 
       beforeEach("mint box tokens to alice and approve Karmic", async () => {
