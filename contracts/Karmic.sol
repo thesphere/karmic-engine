@@ -88,9 +88,8 @@ contract Karmic is Badger{
         for(uint8 i; i < boxTokens.length; i++) {
             token = boxTokens[i];
             uint256 amount = IERC20(token).balanceOf(msg.sender);
-            boxTokenTiers[token].amount -= amount;
             uint256 tokenId = boxTokenTiers[token].id;
-            IERC20(token).transferFrom(msg.sender, address(this), amount);
+            require(IERC20(token).transferFrom(msg.sender, address(this), amount), "Failed ERC20 transfer");
             if(boxTokenTiers[token].id != 0){
                 _mint(msg.sender, tokenId, amount, data);
             }
