@@ -28,7 +28,7 @@ contract Karmic is Badger{
         createTokenTier(0, _newBaseUri, false, address(0));
     }
 
-    fallback() external payable{
+    receive() external payable{
         if(boxTokenTiers[msg.sender].id != 0){
             boxTokenTiers[msg.sender].amount = ERC20(msg.sender).totalSupply();
             boxTokenTiers[msg.sender].funds = msg.value;
