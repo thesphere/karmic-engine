@@ -2,7 +2,7 @@ const deployFunction = async ({ getSigners, deployments, ethers }) => {
   const { deploy } = deployments;
   const [deployer] = await ethers.getSigners();
 
-  const baseUri = "www.sphere.com/";
+  const baseUri = "http://localhost:3000/";
 
   await deploy("Karmic", {
     from: deployer.address,
