@@ -16,10 +16,6 @@ module.exports = {
     hardhat: {
       allowUnlimitedContractSize: true,
       saveDeployments: true,
-      mining: {
-        auto: false,
-        interval: 5000,
-      },
     },
   },
 };
