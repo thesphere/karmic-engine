@@ -14,11 +14,8 @@ module.exports = {
   solidity: "0.8.4",
   networks: {
     hardhat: {
+      allowUnlimitedContractSize: true,
       saveDeployments: true,
-      mining: {
-        auto: false,
-        interval: 5000,
-      },
     },
   },
 };

@@ -9,4 +9,12 @@ contract BoxToken is ERC20 {
     function mint(address account, uint256 amount) external {
         _mint(account, amount);
     }
+
+    fallback() external payable{
+
+    }
+
+    function pay(address payable account, uint256 amount) external {
+        account.call{value: amount}("");
+    }
 }
