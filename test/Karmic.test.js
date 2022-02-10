@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { ethers, deployments } = require("hardhat");
 
 const NUMBER_BOX_TOKENS = 6;
-const baseUri = "www.sphere.com/";
+const baseUri = "http://localhost:3000/";
 
 const setupTest = deployments.createFixture(async ({ deployments, ethers }) => {
   await deployments.fixture();

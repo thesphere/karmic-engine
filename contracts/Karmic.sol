@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Badger.sol";
 
 contract Karmic is Badger{
-    mapping(address => BoxToken) private boxTokenTiers;
+    mapping(address => BoxToken) public boxTokenTiers;
     uint256 boxTokenCounter;
 
     struct BoxToken{

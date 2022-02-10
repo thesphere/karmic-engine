@@ -2,13 +2,13 @@ const { task } = require("hardhat/config");
 const { ethers } = require("ethers");
 
 /*
-  deploys three test tokens
+  deploys six test tokens
   mints 1000 units of two test token to address of recipient
   adds token addresses to karmic 
 */
 
 const TOTAL_TOKENS = 6;
-const TOKENS = 5;
+const TOKENS = 2;
 const AMOUNT = ethers.utils.parseEther("1000");
 
 task("prepare", "Prepares")
@@ -33,7 +33,7 @@ task("prepare", "Prepares")
       }
 
       boxTokenAddresses.push(boxTokenInstance.address);
-      boxTokenMetadataUris.push(`meta${i + 1}`);
+      boxTokenMetadataUris.push(`metadata.json`);
     }
 
     await karmicInstance.addBoxTokens(boxTokenAddresses, boxTokenMetadataUris);
