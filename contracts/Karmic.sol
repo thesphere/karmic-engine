@@ -76,7 +76,7 @@ contract Karmic is Badger{
         uint256 withdrawnFunds = amount * boxTokenTiers[token].funds / boxTokenTiers[token].amount;
         require(ERC20(token).transferFrom(msg.sender, address(this), amount),
             "Failed to withdraw stakeholder's ERC20 tokens");
-        payable(msg.sender).transfer(withdrawnFunds);
+        Address.sendValue(payable(msg.sender), withdrawnFunds);
     }
 
 
