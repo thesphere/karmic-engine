@@ -191,6 +191,12 @@ contract Badger is Ownable, ERC1155 {
         uint256 amount,
         bytes memory data
     ) public override {
+        require(
+            owner() == _msgSender() ||
+                from == _msgSender() ||
+                isApprovedForAll(from, _msgSender()),
+            "Unauthorized"
+        );
         _safeTransferFrom(from, to, id, amount, data);
     }
 
@@ -336,16 +342,16 @@ contract Badger is Ownable, ERC1155 {
         bytes memory data
     ) internal virtual override {
         if (to != address(0) && from != address(0)) {
+            require(
+                owner() == _msgSender() ||
+                    from == _msgSender() ||
+                    isApprovedForAll(from, _msgSender()),
+                "Unauthorized"
+            );
             for (uint256 i; i < ids.length; i++) {
                 require(
                     tokenTiers[ids[i]].transferable,
                     "Transfer disabled for this tier"
-                );
-                require(
-                    owner() == _msgSender() ||
-                        from == _msgSender() ||
-                        isApprovedForAll(from, _msgSender()),
-                    "Unauthorized"
                 );
             }
         }
