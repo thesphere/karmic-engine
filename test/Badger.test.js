@@ -6,7 +6,7 @@ const setupTest = deployments.createFixture(async ({ deployments, ethers }) => {
   return await ethers.getContract("Badger");
 });
 
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 describe("Badger", function () {
   // base config
@@ -47,7 +47,8 @@ describe("Badger", function () {
       await badgerInstance.createTokenTier(
         tokenId,
         uriIdentifier,
-        isTransferable,ZERO_ADDRESS
+        isTransferable,
+        ZERO_ADDRESS
       );
       await badgerInstance.mint(alice.address, tokenId, amount);
 
@@ -100,7 +101,8 @@ describe("Badger", function () {
         await badgerInstance.createTokenTier(
           tokenId,
           uriIdentifier,
-          isTransferable,ZERO_ADDRESS
+          isTransferable,
+          ZERO_ADDRESS
         );
         await badgerInstance.mint(alice.address, tokenId, amount);
       });
@@ -135,13 +137,15 @@ describe("Badger", function () {
       await badgerInstance.createTokenTier(
         nonTransferableTier.tokenId,
         nonTransferableTier.uriIdentifier,
-        nonTransferableTier.isTransferable,ZERO_ADDRESS
+        nonTransferableTier.isTransferable,
+        ZERO_ADDRESS
       );
 
       await badgerInstance.createTokenTier(
         transferableTier.tokenId,
         transferableTier.uriIdentifier,
-        transferableTier.isTransferable,ZERO_ADDRESS
+        transferableTier.isTransferable,
+        ZERO_ADDRESS
       );
     });
 
@@ -214,13 +218,15 @@ describe("Badger", function () {
       await badgerInstance.createTokenTier(
         nonTransferableTier.tokenId,
         nonTransferableTier.uriIdentifier,
-        nonTransferableTier.isTransferable,ZERO_ADDRESS
+        nonTransferableTier.isTransferable,
+        ZERO_ADDRESS
       );
 
       await badgerInstance.createTokenTier(
         transferableTier.tokenId,
         transferableTier.uriIdentifier,
-        transferableTier.isTransferable,ZERO_ADDRESS
+        transferableTier.isTransferable,
+        ZERO_ADDRESS
       );
     });
 
@@ -284,7 +290,8 @@ describe("Badger", function () {
       await badgerInstance.createTokenTier(
         tokenId,
         uriIdentifier,
-        isTransferable,ZERO_ADDRESS
+        isTransferable,
+        ZERO_ADDRESS
       );
 
       const { uriId, transferable } = await badgerInstance.tokenTiers(tokenId);
@@ -294,7 +301,12 @@ describe("Badger", function () {
 
     it("emits an event 'TierChange'", async () => {
       await expect(
-        badgerInstance.createTokenTier(tokenId, uriIdentifier, isTransferable,ZERO_ADDRESS)
+        badgerInstance.createTokenTier(
+          tokenId,
+          uriIdentifier,
+          isTransferable,
+          ZERO_ADDRESS
+        )
       )
         .to.emit(badgerInstance, "TierChange")
         .withArgs(tokenId, uriIdentifier, isTransferable);
@@ -305,7 +317,12 @@ describe("Badger", function () {
         expect(
           badgerInstance
             .connect(alice)
-            .createTokenTier(tokenId, uriIdentifier, isTransferable,ZERO_ADDRESS)
+            .createTokenTier(
+              tokenId,
+              uriIdentifier,
+              isTransferable,
+              ZERO_ADDRESS
+            )
         ).to.be.revertedWith("Ownable: caller is not the owner");
       });
     });
@@ -318,7 +335,8 @@ describe("Badger", function () {
           badgerInstance.createTokenTier(
             tokenId,
             emptyUriIdentifier,
-            isTransferable,ZERO_ADDRESS
+            isTransferable,
+            ZERO_ADDRESS
           )
         ).to.be.revertedWith("String cannot be empty");
       });
@@ -329,13 +347,19 @@ describe("Badger", function () {
         await badgerInstance.createTokenTier(
           tokenId,
           uriIdentifier,
-          isTransferable,ZERO_ADDRESS
+          isTransferable,
+          ZERO_ADDRESS
         );
       });
 
       it("reverts 'Tier already exists for tokenId'", () => {
         expect(
-          badgerInstance.createTokenTier(tokenId, uriIdentifier, isTransferable,ZERO_ADDRESS)
+          badgerInstance.createTokenTier(
+            tokenId,
+            uriIdentifier,
+            isTransferable,
+            ZERO_ADDRESS
+          )
         ).to.be.revertedWith("Tier already exists for tokenId");
       });
     });
@@ -349,7 +373,8 @@ describe("Badger", function () {
       await badgerInstance.createTokenTier(
         tokenId,
         uriIdentifier,
-        isTransferable,ZERO_ADDRESS
+        isTransferable,
+        ZERO_ADDRESS
       );
     });
 
@@ -401,12 +426,14 @@ describe("Badger", function () {
       await badgerInstance.createTokenTier(
         nonTransferableTier.tokenId,
         nonTransferableTier.uriIdentifier,
-        nonTransferableTier.isTransferable,ZERO_ADDRESS
+        nonTransferableTier.isTransferable,
+        ZERO_ADDRESS
       );
       await badgerInstance.createTokenTier(
         transferableTier.tokenId,
         transferableTier.uriIdentifier,
-        transferableTier.isTransferable,ZERO_ADDRESS
+        transferableTier.isTransferable,
+        ZERO_ADDRESS
       );
     });
 
@@ -462,7 +489,8 @@ describe("Badger", function () {
       await badgerInstance.createTokenTier(
         tokenId,
         uriIdentifier,
-        isTransferable,ZERO_ADDRESS
+        isTransferable,
+        ZERO_ADDRESS
       );
     });
 
@@ -551,7 +579,8 @@ describe("Badger", function () {
         await badgerInstance.createTokenTier(
           tokenId,
           uriIdentifier,
-          isTransferable,ZERO_ADDRESS
+          isTransferable,
+          ZERO_ADDRESS
         );
         await badgerInstance.mint(alice.address, tokenId, amount);
       });
@@ -594,7 +623,8 @@ describe("Badger", function () {
         await badgerInstance.createTokenTier(
           tokenId,
           uriIdentifier,
-          isTransferable,ZERO_ADDRESS
+          isTransferable,
+          ZERO_ADDRESS
         );
         await badgerInstance.mint(alice.address, tokenId, amount);
       });
@@ -647,7 +677,8 @@ describe("Badger", function () {
         await badgerInstance.createTokenTier(
           tokenId,
           uriIdentifier,
-          isTransferable,ZERO_ADDRESS
+          isTransferable,
+          ZERO_ADDRESS
         );
         await badgerInstance.mint(alice.address, tokenId, amount);
       });
@@ -676,7 +707,8 @@ describe("Badger", function () {
         await badgerInstance.createTokenTier(
           tokenId,
           uriIdentifier,
-          isTransferable,ZERO_ADDRESS
+          isTransferable,
+          ZERO_ADDRESS
         );
         await badgerInstance.mint(alice.address, tokenId, amount);
       });
@@ -709,12 +741,14 @@ describe("Badger", function () {
       await badgerInstance.createTokenTier(
         transferableTier.tokenId,
         transferableTier.uriIdentifier,
-        transferableTier.isTransferable,ZERO_ADDRESS
+        transferableTier.isTransferable,
+        ZERO_ADDRESS
       );
       await badgerInstance.createTokenTier(
         nonTransferableTier.tokenId,
         nonTransferableTier.uriIdentifier,
-        nonTransferableTier.isTransferable,ZERO_ADDRESS
+        nonTransferableTier.isTransferable,
+        ZERO_ADDRESS
       );
 
       await badgerInstance.mint(
@@ -846,7 +880,8 @@ describe("Badger", function () {
       await badgerInstance.createTokenTier(
         nonTransferableTier.tokenId,
         nonTransferableTier.uriIdentifier,
-        nonTransferableTier.isTransferable,ZERO_ADDRESS
+        nonTransferableTier.isTransferable,
+        ZERO_ADDRESS
       );
       await badgerInstance.mint(
         alice.address,

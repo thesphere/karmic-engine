@@ -62,20 +62,6 @@ contract Badger is Ownable, ERC1155 {
         _;
     }
 
-    // modifier isValidTransfer(uint256 tokenId, address from) {
-    //     require(
-    //         tokenTiers[tokenId].transferable,
-    //         "Transfer disabled for this tier"
-    //     );
-    //     require(
-    //         owner() == _msgSender() ||
-    //             from == _msgSender() ||
-    //             isApprovedForAll(from, _msgSender()),
-    //         "Unauthorized"
-    //     );
-    //     _;
-    // }
-
     /*
         Constructor
     */
