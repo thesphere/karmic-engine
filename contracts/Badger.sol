@@ -62,19 +62,19 @@ contract Badger is Ownable, ERC1155 {
         _;
     }
 
-    modifier isValidTransfer(uint256 tokenId, address from) {
-        require(
-            tokenTiers[tokenId].transferable,
-            "Transfer disabled for this tier"
-        );
-        require(
-            owner() == _msgSender() ||
-                from == _msgSender() ||
-                isApprovedForAll(from, _msgSender()),
-            "Unauthorized"
-        );
-        _;
-    }
+    // modifier isValidTransfer(uint256 tokenId, address from) {
+    //     require(
+    //         tokenTiers[tokenId].transferable,
+    //         "Transfer disabled for this tier"
+    //     );
+    //     require(
+    //         owner() == _msgSender() ||
+    //             from == _msgSender() ||
+    //             isApprovedForAll(from, _msgSender()),
+    //         "Unauthorized"
+    //     );
+    //     _;
+    // }
 
     /*
         Constructor
@@ -98,7 +98,10 @@ contract Badger is Ownable, ERC1155 {
         uint256 amount
     ) public onlyOwner {
         bytes memory data;
-        require(tokenTiers[id].boxToken == address(0), "Can mint only general tokens");
+        require(
+            tokenTiers[id].boxToken == address(0),
+            "Can mint only general tokens"
+        );
         _mint(account, id, amount, data);
     }
 
@@ -113,7 +116,10 @@ contract Badger is Ownable, ERC1155 {
         uint256 id,
         uint256 amount
     ) public onlyOwner {
-        require(tokenTiers[id].boxToken == address(0), "Can burn only general tokens");
+        require(
+            tokenTiers[id].boxToken == address(0),
+            "Can burn only general tokens"
+        );
         _burn(account, id, amount);
     }
 
@@ -132,7 +138,10 @@ contract Badger is Ownable, ERC1155 {
         bytes memory data;
 
         for (uint256 i = 0; i < accounts.length; i++) {
-            require(tokenTiers[tokenIds[i]].boxToken == address(0), "Can mint only general tokens");
+            require(
+                tokenTiers[tokenIds[i]].boxToken == address(0),
+                "Can mint only general tokens"
+            );
             _mint(accounts[i], tokenIds[i], amounts[i], data);
         }
     }
@@ -150,7 +159,10 @@ contract Badger is Ownable, ERC1155 {
         uint256[] calldata amounts
     ) public onlyOwner isSameLength(accounts, tokenIds, amounts) {
         for (uint256 i = 0; i < accounts.length; i++) {
-            require(tokenTiers[tokenIds[i]].boxToken == address(0), "Can burn only general tokens");
+            require(
+                tokenTiers[tokenIds[i]].boxToken == address(0),
+                "Can burn only general tokens"
+            );
             _burn(accounts[i], tokenIds[i], amounts[i]);
         }
     }
@@ -172,7 +184,7 @@ contract Badger is Ownable, ERC1155 {
         address to,
         uint256 id,
         uint256 amount
-    ) public isValidTransfer(id, from) {
+    ) public {
         bytes memory data;
 
         _safeTransferFrom(from, to, id, amount, data);
@@ -192,7 +204,7 @@ contract Badger is Ownable, ERC1155 {
         uint256 id,
         uint256 amount,
         bytes memory data
-    ) public override isValidTransfer(id, from) {
+    ) public override {
         _safeTransferFrom(from, to, id, amount, data);
     }
 
@@ -327,5 +339,29 @@ contract Badger is Ownable, ERC1155 {
         uint256 amount
     ) internal override isTier(id) {
         super._burn(account, id, amount);
+    }
+
+    function _beforeTokenTransfer(
+        address operator,
+        address from,
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) internal virtual override {
+        if (to != address(0) && from != address(0)) {
+            for (uint256 i; i < ids.length; i++) {
+                require(
+                    tokenTiers[ids[i]].transferable,
+                    "Transfer disabled for this tier"
+                );
+                require(
+                    owner() == _msgSender() ||
+                        from == _msgSender() ||
+                        isApprovedForAll(from, _msgSender()),
+                    "Unauthorized"
+                );
+            }
+        }
     }
 }
