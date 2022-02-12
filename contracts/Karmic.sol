@@ -2,14 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Badger.sol";
 
-contract Karmic is Badger{
+contract Karmic is Badger {
+    uint256 public constant FEE_PRECISION = 1 ether; // 10^18 = 100%
     mapping(address => BoxToken) public boxTokenTiers;
-    uint256 boxTokenCounter;
+    uint256 public boxTokenCounter;
+    uint256 public fee;
 
-    struct BoxToken{
+    struct BoxToken {
         uint256 id;
         uint256 amount;
         uint256 funds;
@@ -17,20 +18,20 @@ contract Karmic is Badger{
         uint256 threshold;
     }
 
-    modifier isBoxToken(address token){
+    modifier isBoxToken(address token) {
         require(boxTokenTiers[token].id != 0, "It is not a box token");
         _;
     }
 
-
-    constructor(string memory _newBaseUri) Badger(_newBaseUri) {
+    constructor(string memory _newBaseUri, uint256 _fee) Badger(_newBaseUri) {
         boxTokenCounter = 1;
+        fee = _fee;
         createTokenTier(0, _newBaseUri, false, address(0));
     }
 
-    receive() external payable{
-        if(boxTokenTiers[msg.sender].id != 0){
-            boxTokenTiers[msg.sender].amount = ERC20(msg.sender).totalSupply();
+    receive() external payable {
+        if (boxTokenTiers[msg.sender].id != 0) {
+            boxTokenTiers[msg.sender].amount = IERC20(msg.sender).totalSupply();
             boxTokenTiers[msg.sender].funds = msg.value;
         } else {
             bytes memory data;
@@ -38,18 +39,30 @@ contract Karmic is Badger{
         }
     }
 
-    function bondToMint(address token, uint256 amount) public isBoxToken(token) {
+    function setFee(uint256 _fee) external onlyOwner {
+        fee = _fee;
+    }
 
-        require(ERC20(token).transferFrom(msg.sender, address(this), amount),
-            "Failed to withdraw stakeholder's ERC20 tokens");
+    function bondToMint(address token, uint256 amount)
+        public
+        isBoxToken(token)
+    {
+        require(
+            IERC20(token).transferFrom(msg.sender, address(this), amount),
+            "Failed to withdraw stakeholder's ERC20 tokens"
+        );
         bytes memory data;
         _mint(msg.sender, boxTokenTiers[token].id, amount, data);
     }
 
-    function addBoxTokens(address[] memory tokens, string[] calldata tierUris, uint256[] calldata threshold) external onlyOwner {
+    function addBoxTokens(
+        address[] memory tokens,
+        string[] calldata tierUris,
+        uint256[] calldata threshold
+    ) external onlyOwner {
         uint256 counter = boxTokenCounter;
 
-        for(uint8 i; i< tokens.length; i++) {
+        for (uint8 i; i < tokens.length; i++) {
             address token = tokens[i];
             require(boxTokenTiers[token].id == 0, "DUPLICATE_TOKEN");
             boxTokenTiers[token].id = counter;
@@ -61,44 +74,57 @@ contract Karmic is Badger{
         boxTokenCounter = counter;
     }
 
-    function getBoxTokens() public view returns (address[] memory boxTokens){
+    function getBoxTokens() public view returns (address[] memory boxTokens) {
         boxTokens = new address[](boxTokenCounter);
-        for(uint8 i = 1; i <= boxTokenCounter; i++) {
-            boxTokens[i-1] = tokenTiers[i].boxToken;
+        for (uint8 i = 1; i <= boxTokenCounter; i++) {
+            boxTokens[i - 1] = tokenTiers[i].boxToken;
         }
     }
 
-    function withdraw(address token, uint256 amount) external{
-        require(!(boxTokenTiers[token].funds >= boxTokenTiers[token].threshold),
-            "Can withdraw only funds for tokens that didn't pass threshold");
-        require(boxTokenTiers[token].id != 0,
-            "Can withdraw only funds for crowdfund tokens");
-        uint256 withdrawnFunds = amount * boxTokenTiers[token].funds / boxTokenTiers[token].amount;
-        require(ERC20(token).transferFrom(msg.sender, address(this), amount),
-            "Failed to withdraw stakeholder's ERC20 tokens");
+    function withdraw(address token, uint256 amount) external {
+        require(
+            !(boxTokenTiers[token].funds >= boxTokenTiers[token].threshold),
+            "Can withdraw only funds for tokens that didn't pass threshold"
+        );
+        require(
+            boxTokenTiers[token].id != 0,
+            "Can withdraw only funds for crowdfund tokens"
+        );
+        uint256 withdrawnFunds = (amount * boxTokenTiers[token].funds) /
+            boxTokenTiers[token].amount;
+        require(
+            IERC20(token).transferFrom(msg.sender, address(this), amount),
+            "Failed to withdraw stakeholder's ERC20 tokens"
+        );
         Address.sendValue(payable(msg.sender), withdrawnFunds);
     }
-
 
     function claimGovernanceTokens(address[] memory boxTokens) external {
         bytes memory data;
 
         address token;
-        for(uint8 i; i < boxTokens.length; i++) {
+        for (uint8 i; i < boxTokens.length; i++) {
             token = boxTokens[i];
             uint256 amount = IERC20(token).balanceOf(msg.sender);
             uint256 tokenId = boxTokenTiers[token].id;
-            require(IERC20(token).transferFrom(msg.sender, address(this), amount), "Failed ERC20 transfer");
-            if(boxTokenTiers[token].id != 0){
+            require(
+                IERC20(token).transferFrom(msg.sender, address(this), amount),
+                "Failed ERC20 transfer"
+            );
+            if (boxTokenTiers[token].id != 0) {
                 _mint(msg.sender, tokenId, amount, data);
             }
         }
     }
 
-    function allBalancesOf(address holder) external view returns (uint256[] memory balances) {
+    function allBalancesOf(address holder)
+        external
+        view
+        returns (uint256[] memory balances)
+    {
         balances = new uint256[](boxTokenCounter);
-        for(uint8 i; i < boxTokenCounter; i++) {
-            balances[i] = balanceOf(holder, i + 1);
+        for (uint8 i; i < boxTokenCounter; i++) {
+            balances[i] = balanceOf(holder, i);
         }
-    } 
+    }
 }
