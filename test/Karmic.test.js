@@ -1,8 +1,10 @@
 const { expect } = require("chai");
+const { parseUnits } = require("ethers/lib/utils");
 const { ethers, deployments } = require("hardhat");
 
 const NUMBER_BOX_TOKENS = 6;
 const baseUri = "http://localhost:3000/";
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 const setupTest = deployments.createFixture(async ({ deployments, ethers }) => {
   await deployments.fixture();
@@ -265,5 +267,91 @@ describe("Karmic", () => {
         ).to.be.lessThan(0);
       });
     });
+  });
+  describe("#distributeFunding", () => {
+    const balances = [];
+    let tx;
+    const boxesAmounts = [
+      ethers.utils.parseEther("50"),
+      ethers.utils.parseEther("100"),
+      ethers.utils.parseEther("150"),
+      ethers.utils.parseEther("10"),
+    ];
+    const boxesPayments = [
+      ethers.utils.parseEther("1"),
+      ethers.utils.parseEther("1.5"),
+      ethers.utils.parseEther("2"),
+      ethers.utils.parseEther("0.5"),
+    ];
+    const karmicDonation = ethers.utils.parseEther("4");
+    let aliceBalanceBeforeWithdrawal;
+    let aliceBalanceAfterWithdrawal;
+
+    beforeEach("add box tokens to Karmic", async () => {
+      const expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
+      const expectedUris = boxTokens.map((boxToken, idx) => `boxToken${idx}`);
+      await karmicInstance.addBoxTokens(
+        expectedAddresses,
+        expectedUris,
+        thresholds
+      );
+    });
+
+    beforeEach("mint box tokens to alice and approve Karmic", async () => {
+      for (let i = 0; i < boxesPayments.length; i++) {
+        await boxTokens[i].mint(alice.address, boxesAmounts[i]);
+        await boxTokens[i]
+          .connect(alice)
+          .approve(karmicInstance.address, boxesAmounts[i]);
+        await alice.sendTransaction({
+          to: boxTokens[i].address,
+          value: boxesPayments[i],
+        });
+        await boxTokens[i].pay(karmicInstance.address, boxesPayments[i]);
+      }
+      await alice.sendTransaction({
+        to: karmicInstance.address,
+        value: karmicDonation,
+      });
+    });
+
+    beforeEach("!! check balance of each box", async () => {
+      balances.push((await karmicInstance.boxTokenTiers(ZERO_ADDRESS)).funds);
+      for (let i = 0; i < NUMBER_BOX_TOKENS; i++) {
+        balances.push(
+          (await karmicInstance.boxTokenTiers(boxTokens[i].address)).funds
+        );
+      }
+    });
+    for (let i = 0; i <= NUMBER_BOX_TOKENS; i++) {
+      it(`tries to transfer some funds to recipient from ${
+        i === 0 ? `common pool` : `box ${i}`
+      }`, async () => {
+        await expect(
+          karmicInstance
+            .connect(alice)
+            .distribute(alice.address, i, balances[i])
+        ).to.be.revertedWith("Ownable: caller is not the owner");
+        if (balances[i].gt(0)) {
+          await expect(
+            karmicInstance.distribute(alice.address, i, balances[i])
+          ).to.emit(karmicInstance, "FundsDistributed");
+        } else {
+          await expect(
+            karmicInstance.distribute(alice.address, i, balances[i])
+          ).to.be.revertedWith("nothing to distribute");
+        }
+      });
+      it(`reverts when trying to trsnafer excess funds from ${
+        i === 0 ? `common pool` : `box ${i}`
+      }`, async () => {
+        if (balances[i].gt(0)) {
+          await karmicInstance.distribute(alice.address, i, balances[i]);
+          await expect(
+            karmicInstance.distribute(alice.address, i, balances[i])
+          ).to.be.revertedWith("exceeds balance");
+        }
+      });
+    }
   });
 });
