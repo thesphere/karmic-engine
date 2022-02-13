@@ -6,6 +6,7 @@ import "./Badger.sol";
 
 contract Karmic is Badger {
     uint256 public constant FEE_PRECISION = 1 ether; // 10^18 = 100%
+    uint256 public constant TOKENS_PER_ETH = 1000;
     mapping(address => BoxToken) public boxTokenTiers;
     uint256 public boxTokenCounter;
     uint256 public fee;
@@ -59,7 +60,7 @@ contract Karmic is Badger {
             "Failed to withdraw stakeholder's ERC20 tokens"
         );
         bytes memory data;
-        _mint(msg.sender, boxTokenTiers[token].id, amount, data);
+        _mint(msg.sender, boxTokenTiers[token].id, amount/TOKENS_PER_ETH, data);
     }
 
     function addBoxTokens(
@@ -119,7 +120,7 @@ contract Karmic is Badger {
                 "Failed ERC20 transfer"
             );
             if (boxTokenTiers[token].id != 0) {
-                _mint(msg.sender, tokenId, amount, data);
+                _mint(msg.sender, tokenId, amount/TOKENS_PER_ETH, data);
             }
         }
     }
