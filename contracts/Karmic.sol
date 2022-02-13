@@ -17,6 +17,8 @@ contract Karmic is Badger{
         uint256 threshold;
     }
 
+    event FundsDistributed(address indexed receiver, uint256 indexed tokenTier, uint256 amount);
+
     modifier isBoxToken(address token){
         require(boxTokenTiers[token].id != 0, "It is not a box token");
         _;
@@ -95,10 +97,17 @@ contract Karmic is Badger{
         }
     }
 
+    function distribute(address payable _receiver, uint256 _tier) external onlyOwner {
+        BoxToken storage boxToken = boxTokenTiers[tokenTiers[_tier].boxToken];
+        require(boxToken.funds>0, "nothing to ditribute");
+        Address.sendValue(_receiver, boxToken.funds);
+        emit FundsDistributed(_receiver, _tier, boxToken.funds);
+    }
+
     function allBalancesOf(address holder) external view returns (uint256[] memory balances) {
         balances = new uint256[](boxTokenCounter);
         for(uint8 i; i < boxTokenCounter; i++) {
             balances[i] = balanceOf(holder, i + 1);
         }
-    } 
+    }
 }
