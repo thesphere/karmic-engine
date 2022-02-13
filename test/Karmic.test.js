@@ -5,6 +5,7 @@ const { ethers, deployments } = require("hardhat");
 const NUMBER_BOX_TOKENS = 6;
 const baseUri = "http://localhost:3000/";
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const tokensPerEth = 1000;
 
 const setupTest = deployments.createFixture(async ({ deployments, ethers }) => {
   await deployments.fixture();
@@ -201,10 +202,10 @@ describe("Karmic", () => {
           0
         );
 
-        expect(firstGovTokenAmount).to.equal(boxesAmounts[0]);
-        expect(secondGovTokenAmount).to.equal(boxesAmounts[1]);
-        expect(thirdGovTokenAmount).to.equal(boxesAmounts[2]);
-        expect(fourthGovTokenAmount).to.equal(boxesAmounts[3].div(2));
+        expect(firstGovTokenAmount).to.equal(boxesAmounts[0].div(tokensPerEth));
+        expect(secondGovTokenAmount).to.equal(boxesAmounts[1].div(tokensPerEth));
+        expect(thirdGovTokenAmount).to.equal(boxesAmounts[2].div(tokensPerEth));
+        expect(fourthGovTokenAmount).to.equal(boxesAmounts[3].div(2).div(tokensPerEth));
         expect(fifthGovTokenAmount).to.equal(karmicDonation);
       });
 

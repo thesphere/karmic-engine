@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Badger.sol";
 
 contract Karmic is Badger {
+    uint256 public constant TOKENS_PER_ETH = 1000;
     mapping(address => BoxToken) public boxTokenTiers;
     uint256 boxTokenCounter;
 
@@ -53,7 +54,7 @@ contract Karmic is Badger {
             "Failed to withdraw stakeholder's ERC20 tokens"
         );
         bytes memory data;
-        _mint(msg.sender, boxTokenTiers[token].id, amount, data);
+        _mint(msg.sender, boxTokenTiers[token].id, amount/TOKENS_PER_ETH, data);
     }
 
     function addBoxTokens(
@@ -113,7 +114,7 @@ contract Karmic is Badger {
                 "Failed ERC20 transfer"
             );
             if (boxTokenTiers[token].id != 0) {
-                _mint(msg.sender, tokenId, amount, data);
+                _mint(msg.sender, tokenId, amount/TOKENS_PER_ETH, data);
             }
         }
     }
