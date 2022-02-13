@@ -296,17 +296,28 @@ describe("Karmic", () => {
         i === 0 ? `common pool` : `box ${i}`
       }`, async () => {
         await expect(
-          karmicInstance.connect(alice).distribute(alice.address, i)
+          karmicInstance
+            .connect(alice)
+            .distribute(alice.address, i, balances[i])
         ).to.be.revertedWith("Ownable: caller is not the owner");
         if (balances[i].gt(0)) {
-          await expect(karmicInstance.distribute(alice.address, i)).to.emit(
-            karmicInstance,
-            "FundsDistributed"
-          );
+          await expect(
+            karmicInstance.distribute(alice.address, i, balances[i])
+          ).to.emit(karmicInstance, "FundsDistributed");
         } else {
           await expect(
-            karmicInstance.distribute(alice.address, i)
-          ).to.be.revertedWith("nothing to ditribute");
+            karmicInstance.distribute(alice.address, i, balances[i])
+          ).to.be.revertedWith("nothing to distribute");
+        }
+      });
+      it(`reverts when trying to trsnafer excess funds from ${
+        i === 0 ? `common pool` : `box ${i}`
+      }`, async () => {
+        if (balances[i].gt(0)) {
+          await karmicInstance.distribute(alice.address, i, balances[i]);
+          await expect(
+            karmicInstance.distribute(alice.address, i, balances[i])
+          ).to.be.revertedWith("exceeds balance");
         }
       });
     }
