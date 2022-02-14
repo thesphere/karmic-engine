@@ -44,6 +44,7 @@ contract Karmic is Badger {
             boxTokenTiers[address(0)].funds += (msg.value*fee/FEE_PRECISION);
         } else {
             bytes memory data;
+            boxTokenTiers[address(0)].funds += msg.value;
             _mint(msg.sender, 0, msg.value, data);
         }
     }
@@ -56,10 +57,7 @@ contract Karmic is Badger {
         public
         isBoxToken(token)
     {
-        require(
-            IERC20(token).transferFrom(msg.sender, address(this), amount),
-            "Failed to withdraw stakeholder's ERC20 tokens"
-        );
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
         bytes memory data;
         _mint(msg.sender, boxTokenTiers[token].id, amount/TOKENS_PER_ETH, data);
     }
@@ -90,24 +88,17 @@ contract Karmic is Badger {
         }
     }
 
-    function withdraw(address token, uint256 amount) external {
+    function withdraw(address token, uint256 amount) external isBoxToken(token) {
         uint256 totalFunding = (boxTokenTiers[token].funds*FEE_PRECISION) / (FEE_PRECISION - fee);
         require(
             !(totalFunding >= boxTokenTiers[token].threshold),
             "Can withdraw only funds for tokens that didn't pass threshold"
         );
-        require(
-            boxTokenTiers[token].id != 0,
-            "Can withdraw only funds for crowdfund tokens"
-        );
         uint256 withdrawnFunds = (amount * totalFunding) /
             boxTokenTiers[token].amount;
         boxTokenTiers[token].funds -= withdrawnFunds - withdrawnFunds*fee/FEE_PRECISION;
         boxTokenTiers[address(0)].funds -= withdrawnFunds*fee/FEE_PRECISION;
-        require(
-            IERC20(token).transferFrom(msg.sender, address(this), amount),
-            "Failed to withdraw stakeholder's ERC20 tokens"
-        );
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
         Address.sendValue(payable(msg.sender), withdrawnFunds);
     }
 
@@ -119,13 +110,8 @@ contract Karmic is Badger {
             token = boxTokens[i];
             uint256 amount = IERC20(token).balanceOf(msg.sender);
             uint256 tokenId = boxTokenTiers[token].id;
-            require(
-                IERC20(token).transferFrom(msg.sender, address(this), amount),
-                "Failed ERC20 transfer"
-            );
-            if (boxTokenTiers[token].id != 0) {
-                _mint(msg.sender, tokenId, amount/TOKENS_PER_ETH, data);
-            }
+            IERC20(token).transferFrom(msg.sender, address(this), amount);
+            _mint(msg.sender, tokenId, amount/TOKENS_PER_ETH, data);
         }
     }
 
