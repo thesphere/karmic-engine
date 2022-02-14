@@ -169,6 +169,14 @@ describe("Karmic", () => {
         );
       });
 
+      it(" reverts 'It is not a box token'", async () => {
+        await expect(
+          karmicInstance.withdraw(ZERO_ADDRESS, boxesAmounts[0])
+        ).to.be.revertedWith(
+          "It is not a box token"
+        );
+      });
+
       beforeEach("call claimGovernanceTokens", async () => {
         await karmicInstance
           .connect(alice)
@@ -194,7 +202,7 @@ describe("Karmic", () => {
       it("can't mint box tokens", async () => {
         await expect(
           karmicInstance.connect(deployer).mint(bob.address, 1, boxesAmounts[0])
-        ).to.be.revertedWith("Can mint only general tokens");
+        ).to.be.revertedWith("only on general tokens");
       });
 
       it("mints the correct amount of gov tokens to alice", async () => {

@@ -26,6 +26,12 @@ describe("Badger", function () {
     isTransferable: true,
   };
 
+  const boxTokenTier = {
+    tokenId : 10,
+    uriIdentifier: defaultUriId,
+    isTransferable: false
+  };
+
   let badgerInstance, owner, alice, bob, baseUri;
 
   before("get signers", async () => {
@@ -147,11 +153,25 @@ describe("Badger", function () {
         transferableTier.isTransferable,
         ZERO_ADDRESS
       );
+
+      await badgerInstance.createTokenTier(
+        boxTokenTier.tokenId,
+        boxTokenTier.uriIdentifier,
+        boxTokenTier.isTransferable,
+        alice.address
+      );
     });
 
     context("valid inputs and access rights", () => {
       beforeEach("mint a batch of token to diff addresses", async () => {
         await badgerInstance.mintToMultiple(addresses, tokenIds, amounts);
+      });
+
+      it("reverts if trying to mint box tokens", async () => {
+        const newAddresses = [...addresses, addresses[0]];
+        const newTokenIds = [...tokenIds, boxTokenTier.tokenId];
+        const newAmounts = [...amounts, amounts[0]];
+        await expect(badgerInstance.mintToMultiple(newAddresses, newTokenIds, newAmounts)).to.be.revertedWith("Can mint only general tokens");
       });
 
       it("mints correct amount of tokens to alice", async () => {
@@ -228,6 +248,13 @@ describe("Badger", function () {
         transferableTier.isTransferable,
         ZERO_ADDRESS
       );
+
+      await badgerInstance.createTokenTier(
+        boxTokenTier.tokenId,
+        boxTokenTier.uriIdentifier,
+        boxTokenTier.isTransferable,
+        alice.address
+      );
     });
 
     context("with valid inputs and access rights", () => {
@@ -236,6 +263,15 @@ describe("Badger", function () {
       });
 
       beforeEach("burn tokens", async () => {
+        await badgerInstance.burnFromMultiple(addresses, tokenIds, burnAmounts);
+      });
+
+      it("reverts 'Can burn only general tokens'", async () => {
+        const newAddresses = [...addresses, addresses[0]];
+        const newTokenIds = [...tokenIds, boxTokenTier.tokenId];
+        const newAmounts = [...amounts, amounts[0]];
+        await badgerInstance.mintToMultiple(addresses, tokenIds, amounts);
+        await expect(badgerInstance.burnFromMultiple(newAddresses, newTokenIds, newAmounts)).to.be.revertedWith("Can burn only general tokens");
         await badgerInstance.burnFromMultiple(addresses, tokenIds, burnAmounts);
       });
 
@@ -443,6 +479,13 @@ describe("Badger", function () {
         newUriIds
       );
     });
+
+    it("reverts 'Input array mismatch'", async () => {
+      await expect(badgerInstance.updateMultipleUriIdentifiers(
+        [nonTransferableTier.tokenId],
+        newUriIds
+      )).to.be.revertedWith("Input array mismatch");
+    })
 
     it("saves the correct uri for the first token tier", async () => {
       const uri = await badgerInstance.uri(nonTransferableTier.tokenId);
