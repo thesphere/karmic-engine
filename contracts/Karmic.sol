@@ -40,7 +40,8 @@ contract Karmic is Badger {
     receive() external payable {
         if (boxTokenTiers[msg.sender].id != 0) {
             boxTokenTiers[msg.sender].amount = IERC20(msg.sender).totalSupply();
-            boxTokenTiers[msg.sender].funds = msg.value;
+            boxTokenTiers[msg.sender].funds += msg.value - (msg.value*fee/FEE_PRECISION);
+            boxTokenTiers[address(0)].funds += (msg.value*fee/FEE_PRECISION);
         } else {
             bytes memory data;
             _mint(msg.sender, 0, msg.value, data);
@@ -90,16 +91,19 @@ contract Karmic is Badger {
     }
 
     function withdraw(address token, uint256 amount) external {
+        uint256 totalFunding = (boxTokenTiers[token].funds*FEE_PRECISION) / (FEE_PRECISION - fee);
         require(
-            !(boxTokenTiers[token].funds >= boxTokenTiers[token].threshold),
+            !(totalFunding >= boxTokenTiers[token].threshold),
             "Can withdraw only funds for tokens that didn't pass threshold"
         );
         require(
             boxTokenTiers[token].id != 0,
             "Can withdraw only funds for crowdfund tokens"
         );
-        uint256 withdrawnFunds = (amount * boxTokenTiers[token].funds) /
+        uint256 withdrawnFunds = (amount * totalFunding) /
             boxTokenTiers[token].amount;
+        boxTokenTiers[token].funds -= withdrawnFunds - withdrawnFunds*fee/FEE_PRECISION;
+        boxTokenTiers[address(0)].funds -= withdrawnFunds*fee/FEE_PRECISION;
         require(
             IERC20(token).transferFrom(msg.sender, address(this), amount),
             "Failed to withdraw stakeholder's ERC20 tokens"

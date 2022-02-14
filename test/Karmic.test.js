@@ -117,10 +117,10 @@ describe("Karmic", () => {
 
   describe("#claimGovernanceTokens", () => {
     const boxesAmounts = [
-      ethers.utils.parseEther("50"),
-      ethers.utils.parseEther("100"),
-      ethers.utils.parseEther("150"),
-      ethers.utils.parseEther("10"),
+      ethers.utils.parseEther("1000"),
+      ethers.utils.parseEther("1500"),
+      ethers.utils.parseEther("2000"),
+      ethers.utils.parseEther("500"),
     ];
     const boxesPayments = [
       ethers.utils.parseEther("1"),
@@ -146,13 +146,13 @@ describe("Karmic", () => {
       beforeEach("mint box tokens to alice and approve Karmic", async () => {
         for (let i = 0; i < boxesPayments.length; i++) {
           await boxTokens[i].mint(alice.address, boxesAmounts[i]);
-          await boxTokens[i]
-            .connect(alice)
-            .approve(karmicInstance.address, boxesAmounts[i]);
           await alice.sendTransaction({
             to: boxTokens[i].address,
             value: boxesPayments[i],
           });
+          await boxTokens[i]
+            .connect(alice)
+            .approve(karmicInstance.address, boxesAmounts[i].mul(1000));
           await boxTokens[i].pay(karmicInstance.address, boxesPayments[i]);
         }
         await alice.sendTransaction({
