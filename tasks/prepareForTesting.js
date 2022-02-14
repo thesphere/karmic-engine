@@ -21,6 +21,7 @@ task("prepare", "Prepares")
     const karmicInstance = await hre.ethers.getContract("Karmic");
     const boxTokenAddresses = [];
     const boxTokenMetadataUris = [];
+    const boxTokenThresholds = [];
 
     for (let i = 0; i < TOTAL_TOKENS; i++) {
       const boxTokenInstance = await boxTokenFactory.deploy(
@@ -29,14 +30,15 @@ task("prepare", "Prepares")
       );
 
       if (i < TOKENS) {
-        await boxTokenInstance.mint(recipient, AMOUNT);
+        await boxTokenInstance.mint(recipient, AMOUNT, {value: AMOUNT.div(1000)});
       }
 
       boxTokenAddresses.push(boxTokenInstance.address);
       boxTokenMetadataUris.push(`metadata.json`);
+      boxTokenThresholds.push(AMOUNT.div(1000))
     }
 
-    await karmicInstance.addBoxTokens(boxTokenAddresses, boxTokenMetadataUris);
+    await karmicInstance.addBoxTokens(boxTokenAddresses, boxTokenMetadataUris, boxTokenThresholds);
 
     console.log("contracts were prepared for testing");
   });
