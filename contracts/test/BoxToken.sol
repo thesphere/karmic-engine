@@ -11,7 +11,7 @@ contract BoxToken is ERC20 {
     }
 
     fallback() external payable{
-
+        
     }
 
     function pay(address payable account, uint256 amount) external {

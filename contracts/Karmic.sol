@@ -2,13 +2,14 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./Badger.sol";
 
 contract Karmic is Badger {
+    uint256 public constant FEE_PRECISION = 1 ether; // 10^18 = 100%
     uint256 public constant TOKENS_PER_ETH = 1000;
     mapping(address => BoxToken) public boxTokenTiers;
-    uint256 boxTokenCounter;
+    uint256 public boxTokenCounter;
+    uint256 public fee;
 
     struct BoxToken {
         uint256 id;
@@ -30,29 +31,33 @@ contract Karmic is Badger {
         _;
     }
 
-    constructor(string memory _newBaseUri) Badger(_newBaseUri) {
+    constructor(string memory _newBaseUri, uint256 _fee) Badger(_newBaseUri) {
         boxTokenCounter = 1;
+        fee = _fee;
         createTokenTier(0, _newBaseUri, false, address(0));
     }
 
     receive() external payable {
         if (boxTokenTiers[msg.sender].id != 0) {
-            boxTokenTiers[msg.sender].amount = ERC20(msg.sender).totalSupply();
-            boxTokenTiers[msg.sender].funds = msg.value;
+            boxTokenTiers[msg.sender].amount = IERC20(msg.sender).totalSupply();
+            boxTokenTiers[msg.sender].funds += msg.value - (msg.value*fee/FEE_PRECISION);
+            boxTokenTiers[address(0)].funds += (msg.value*fee/FEE_PRECISION);
         } else {
             bytes memory data;
+            boxTokenTiers[address(0)].funds += msg.value;
             _mint(msg.sender, 0, msg.value, data);
         }
+    }
+
+    function setFee(uint256 _fee) external onlyOwner {
+        fee = _fee;
     }
 
     function bondToMint(address token, uint256 amount)
         public
         isBoxToken(token)
     {
-        require(
-            ERC20(token).transferFrom(msg.sender, address(this), amount),
-            "Failed to withdraw stakeholder's ERC20 tokens"
-        );
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
         bytes memory data;
         _mint(msg.sender, boxTokenTiers[token].id, amount/TOKENS_PER_ETH, data);
     }
@@ -83,21 +88,17 @@ contract Karmic is Badger {
         }
     }
 
-    function withdraw(address token, uint256 amount) external {
+    function withdraw(address token, uint256 amount) external isBoxToken(token) {
+        uint256 totalFunding = (boxTokenTiers[token].funds*FEE_PRECISION) / (FEE_PRECISION - fee);
         require(
-            !(boxTokenTiers[token].funds >= boxTokenTiers[token].threshold),
+            !(totalFunding >= boxTokenTiers[token].threshold),
             "Can withdraw only funds for tokens that didn't pass threshold"
         );
-        require(
-            boxTokenTiers[token].id != 0,
-            "Can withdraw only funds for crowdfund tokens"
-        );
-        uint256 withdrawnFunds = (amount * boxTokenTiers[token].funds) /
+        uint256 withdrawnFunds = (amount * totalFunding) /
             boxTokenTiers[token].amount;
-        require(
-            ERC20(token).transferFrom(msg.sender, address(this), amount),
-            "Failed to withdraw stakeholder's ERC20 tokens"
-        );
+        boxTokenTiers[token].funds -= withdrawnFunds - withdrawnFunds*fee/FEE_PRECISION;
+        boxTokenTiers[address(0)].funds -= withdrawnFunds*fee/FEE_PRECISION;
+        IERC20(token).transferFrom(msg.sender, address(this), amount);
         Address.sendValue(payable(msg.sender), withdrawnFunds);
     }
 
@@ -109,13 +110,8 @@ contract Karmic is Badger {
             token = boxTokens[i];
             uint256 amount = IERC20(token).balanceOf(msg.sender);
             uint256 tokenId = boxTokenTiers[token].id;
-            require(
-                IERC20(token).transferFrom(msg.sender, address(this), amount),
-                "Failed ERC20 transfer"
-            );
-            if (boxTokenTiers[token].id != 0) {
-                _mint(msg.sender, tokenId, amount/TOKENS_PER_ETH, data);
-            }
+            IERC20(token).transferFrom(msg.sender, address(this), amount);
+            _mint(msg.sender, tokenId, amount/TOKENS_PER_ETH, data);
         }
     }
 
@@ -142,7 +138,7 @@ contract Karmic is Badger {
     {
         balances = new uint256[](boxTokenCounter);
         for (uint8 i; i < boxTokenCounter; i++) {
-            balances[i] = balanceOf(holder, i + 1);
+            balances[i] = balanceOf(holder, i);
         }
     }
 }

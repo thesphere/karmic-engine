@@ -62,6 +62,14 @@ contract Badger is Ownable, ERC1155 {
         _;
     }
 
+    modifier onlyGeneralToken(uint256 id) {
+        require(
+            tokenTiers[id].boxToken == address(0),
+            "only on general tokens"
+        );
+        _;
+    }
+
     /*
         Constructor
     */
@@ -82,12 +90,8 @@ contract Badger is Ownable, ERC1155 {
         address account,
         uint256 id,
         uint256 amount
-    ) public onlyOwner {
+    ) public onlyOwner onlyGeneralToken(id) {
         bytes memory data;
-        require(
-            tokenTiers[id].boxToken == address(0),
-            "Can mint only general tokens"
-        );
         _mint(account, id, amount, data);
     }
 
@@ -101,11 +105,7 @@ contract Badger is Ownable, ERC1155 {
         address account,
         uint256 id,
         uint256 amount
-    ) public onlyOwner {
-        require(
-            tokenTiers[id].boxToken == address(0),
-            "Can burn only general tokens"
-        );
+    ) public onlyOwner onlyGeneralToken(id) {
         _burn(account, id, amount);
     }
 

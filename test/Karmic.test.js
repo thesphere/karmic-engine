@@ -98,12 +98,29 @@ describe("Karmic", () => {
     });
   });
 
+  describe("#updateFees", () => {
+    const newFees = ethers.utils.parseUnits("0.05", 18);
+    context(" when called by non-owner", () => {
+      it("can only be updated by owner", async () => {
+        await expect(
+          karmicInstance.connect(alice).setFee(newFees)
+        ).to.be.revertedWith("Ownable: caller is not the owner");
+      });
+    });
+    context(" when called by owner", () => {
+      it("successfully updates the fees", async () => {
+        await karmicInstance.setFee(newFees);
+        expect((await karmicInstance.fee()).eq(newFees)).to.be.true;
+      });
+    });
+  });
+
   describe("#claimGovernanceTokens", () => {
     const boxesAmounts = [
-      ethers.utils.parseEther("50"),
-      ethers.utils.parseEther("100"),
-      ethers.utils.parseEther("150"),
-      ethers.utils.parseEther("10"),
+      ethers.utils.parseEther("1000"),
+      ethers.utils.parseEther("1500"),
+      ethers.utils.parseEther("2000"),
+      ethers.utils.parseEther("500"),
     ];
     const boxesPayments = [
       ethers.utils.parseEther("1"),
@@ -129,13 +146,13 @@ describe("Karmic", () => {
       beforeEach("mint box tokens to alice and approve Karmic", async () => {
         for (let i = 0; i < boxesPayments.length; i++) {
           await boxTokens[i].mint(alice.address, boxesAmounts[i]);
-          await boxTokens[i]
-            .connect(alice)
-            .approve(karmicInstance.address, boxesAmounts[i]);
           await alice.sendTransaction({
             to: boxTokens[i].address,
             value: boxesPayments[i],
           });
+          await boxTokens[i]
+            .connect(alice)
+            .approve(karmicInstance.address, boxesAmounts[i].mul(1000));
           await boxTokens[i].pay(karmicInstance.address, boxesPayments[i]);
         }
         await alice.sendTransaction({
@@ -149,6 +166,14 @@ describe("Karmic", () => {
           karmicInstance.withdraw(boxTokens[0].address, boxesAmounts[0])
         ).to.be.revertedWith(
           "Can withdraw only funds for tokens that didn't pass threshold"
+        );
+      });
+
+      it(" reverts 'It is not a box token'", async () => {
+        await expect(
+          karmicInstance.withdraw(ZERO_ADDRESS, boxesAmounts[0])
+        ).to.be.revertedWith(
+          "It is not a box token"
         );
       });
 
@@ -177,7 +202,7 @@ describe("Karmic", () => {
       it("can't mint box tokens", async () => {
         await expect(
           karmicInstance.connect(deployer).mint(bob.address, 1, boxesAmounts[0])
-        ).to.be.revertedWith("Can mint only general tokens");
+        ).to.be.revertedWith("only on general tokens");
       });
 
       it("mints the correct amount of gov tokens to alice", async () => {
@@ -220,6 +245,21 @@ describe("Karmic", () => {
         expect(BigInt(generalGovTokenAmount)).to.equal(
           BigInt(karmicDonation) + BigInt(boxesAmounts[0])
         );
+      });
+
+      it("gets correct balance of all tokens", async () => {
+        const zeroBn = ethers.BigNumber.from(0);
+        let totalBalance = zeroBn;
+        for (let i = 0; i <= NUMBER_BOX_TOKENS; i++) {
+          totalBalance = totalBalance.add(
+            await karmicInstance.balanceOf(alice.address, i)
+          );
+        }
+        const allBalance = await karmicInstance.allBalancesOf(alice.address);
+        const accumulatedBalance = allBalance.reduce((prev = zeroBn, current) =>
+          prev.add(current)
+        );
+        expect(accumulatedBalance.eq(totalBalance)).to.be.true;
       });
 
       it("removes the box tokens from alice", async () => {
