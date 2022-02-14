@@ -13,3 +13,4 @@ const deployFunction = async ({ getSigners, deployments, ethers }) => {
 };
 
 module.exports = deployFunction;
+module.exports.tags = ["Karmic"];
