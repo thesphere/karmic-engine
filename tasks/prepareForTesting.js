@@ -22,6 +22,8 @@ task("prepare", "Prepares")
     const boxTokenAddresses = [];
     const boxTokenMetadataUris = [];
     const boxTokenThresholds = [];
+    const boxTokens = [];
+    const boxPromises = [];
 
     for (let i = 0; i < TOTAL_TOKENS; i++) {
       const boxTokenInstance = await boxTokenFactory.deploy(
@@ -30,15 +32,27 @@ task("prepare", "Prepares")
       );
 
       if (i < TOKENS) {
-        await boxTokenInstance.mint(recipient, AMOUNT, {value: AMOUNT.div(1000)});
+        boxPromises.push(boxTokenInstance.mint(recipient, AMOUNT, {value: AMOUNT.div(1000)}));
+      } else {
+        boxPromises.push(boxTokenInstance.mint(recipient, AMOUNT.div(10), {value: AMOUNT.div(10000)}));
       }
 
+      boxTokens.push(boxTokenInstance);
       boxTokenAddresses.push(boxTokenInstance.address);
       boxTokenMetadataUris.push(`metadata.json`);
       boxTokenThresholds.push(AMOUNT.div(1000))
     }
 
+    await Promise.all(boxPromises);
     await karmicInstance.addBoxTokens(boxTokenAddresses, boxTokenMetadataUris, boxTokenThresholds);
+
+    for(let i = 0; i<TOTAL_TOKENS; i++) {
+      if (i < TOKENS) {
+        await boxTokens[i].pay(karmicInstance.address, AMOUNT.div(1000));
+      } else {
+        await boxTokens[i].pay(karmicInstance.address, AMOUNT.div(10000));
+      }
+    }
 
     console.log("contracts were prepared for testing");
   });
