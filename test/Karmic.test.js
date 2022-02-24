@@ -25,6 +25,13 @@ const setupTest = deployments.createFixture(async ({ deployments, ethers }) => {
 });
 
 describe("Karmic", () => {
+  const boxesAmounts = [
+    ethers.utils.parseEther("1000"),
+    ethers.utils.parseEther("1500"),
+    ethers.utils.parseEther("2000"),
+    ethers.utils.parseEther("500"),
+  ];
+
   let karmicInstance, boxTokens, thresholds, deployer, alice, bob;
 
   before("get array of signers", async () => {
@@ -115,13 +122,20 @@ describe("Karmic", () => {
     });
   });
 
+  describe.only("#withdraw", () => {
+    context("when contract is paused", () => {
+      it("reverts 'Pausable: paused'", async () => {
+        await karmicInstance.pause();
+        await expect(
+          karmicInstance.withdraw(boxTokens[0].address, boxesAmounts[0])
+        ).to.be.revertedWith("Pausable: paused");
+      });
+    });
+  });
+
+  // describe()
+
   describe("#claimGovernanceTokens", () => {
-    const boxesAmounts = [
-      ethers.utils.parseEther("1000"),
-      ethers.utils.parseEther("1500"),
-      ethers.utils.parseEther("2000"),
-      ethers.utils.parseEther("500"),
-    ];
     const boxesPayments = [
       ethers.utils.parseEther("1"),
       ethers.utils.parseEther("1.5"),
@@ -131,6 +145,48 @@ describe("Karmic", () => {
     const karmicDonation = ethers.utils.parseEther("4");
     let aliceBalanceBeforeWithdrawal;
     let aliceBalanceAfterWithdrawal;
+
+    context.only("when contract is paused", () => {
+      beforeEach("add box tokens to Karmic", async () => {
+        const expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
+        const expectedUris = boxTokens.map((boxToken, idx) => `boxToken${idx}`);
+        await karmicInstance.addBoxTokens(
+          expectedAddresses,
+          expectedUris,
+          thresholds
+        );
+      });
+
+      beforeEach("mint box tokens to alice and approve Karmic", async () => {
+        for (let i = 0; i < boxesPayments.length; i++) {
+          await boxTokens[i].mint(alice.address, boxesAmounts[i]);
+          await alice.sendTransaction({
+            to: boxTokens[i].address,
+            value: boxesPayments[i],
+          });
+          await boxTokens[i]
+            .connect(alice)
+            .approve(karmicInstance.address, boxesAmounts[i].mul(1000));
+          await boxTokens[i].pay(karmicInstance.address, boxesPayments[i]);
+        }
+        await alice.sendTransaction({
+          to: karmicInstance.address,
+          value: karmicDonation,
+        });
+      });
+
+      beforeEach("activate failsafe", async () => {
+        await karmicInstance.pause();
+      });
+
+      it("reverts 'Pausable: paused'", async () => {
+        await expect(
+          karmicInstance
+            .connect(alice)
+            .claimGovernanceTokens([boxTokens[0].address, boxTokens[1].address])
+        ).to.be.revertedWith("Pausable: paused");
+      });
+    });
 
     context("when all conditions are fulfilled (happy path)", () => {
       beforeEach("add box tokens to Karmic", async () => {
@@ -172,9 +228,7 @@ describe("Karmic", () => {
       it(" reverts 'It is not a box token'", async () => {
         await expect(
           karmicInstance.withdraw(ZERO_ADDRESS, boxesAmounts[0])
-        ).to.be.revertedWith(
-          "It is not a box token"
-        );
+        ).to.be.revertedWith("It is not a box token");
       });
 
       beforeEach("call claimGovernanceTokens", async () => {
@@ -228,9 +282,13 @@ describe("Karmic", () => {
         );
 
         expect(firstGovTokenAmount).to.equal(boxesAmounts[0].div(tokensPerEth));
-        expect(secondGovTokenAmount).to.equal(boxesAmounts[1].div(tokensPerEth));
+        expect(secondGovTokenAmount).to.equal(
+          boxesAmounts[1].div(tokensPerEth)
+        );
         expect(thirdGovTokenAmount).to.equal(boxesAmounts[2].div(tokensPerEth));
-        expect(fourthGovTokenAmount).to.equal(boxesAmounts[3].div(2).div(tokensPerEth));
+        expect(fourthGovTokenAmount).to.equal(
+          boxesAmounts[3].div(2).div(tokensPerEth)
+        );
         expect(fifthGovTokenAmount).to.equal(karmicDonation);
       });
 
@@ -277,6 +335,7 @@ describe("Karmic", () => {
       });
     });
   });
+
   describe("#distributeFunding", () => {
     const balances = [];
     let tx;
@@ -332,6 +391,7 @@ describe("Karmic", () => {
         );
       }
     });
+
     for (let i = 0; i <= NUMBER_BOX_TOKENS; i++) {
       it(`tries to transfer some funds to recipient from ${
         i === 0 ? `common pool` : `box ${i}`
@@ -362,5 +422,41 @@ describe("Karmic", () => {
         }
       });
     }
+  });
+
+  describe("#pause", () => {
+    it("reverts if called ny non-owner", async () => {
+      await expect(karmicInstance.connect(alice).pause()).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+  });
+
+  describe("#unpause", () => {
+    beforeEach("pause contract", async () => {
+      await karmicInstance.pause();
+    });
+
+    it("reverts if called ny non-owner", async () => {
+      await expect(karmicInstance.connect(alice).unpause()).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+  });
+
+  describe.only("#bondToMint", () => {
+    context("when contract is paused", () => {
+      beforeEach("pause contract", async () => {
+        await karmicInstance.pause();
+      });
+
+      it("reverts 'Pausable: paused'", async () => {
+        await expect(
+          karmicInstance
+            .connect(alice)
+            .bondToMint(boxTokens[2].address, boxesAmounts[2])
+        ).to.be.revertedWith("Pausable: paused");
+      });
+    });
   });
 });
