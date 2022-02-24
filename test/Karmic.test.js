@@ -122,7 +122,7 @@ describe("Karmic", () => {
     });
   });
 
-  describe.only("#withdraw", () => {
+  describe("#withdraw", () => {
     context("when contract is paused", () => {
       it("reverts 'Pausable: paused'", async () => {
         await karmicInstance.pause();
@@ -146,7 +146,7 @@ describe("Karmic", () => {
     let aliceBalanceBeforeWithdrawal;
     let aliceBalanceAfterWithdrawal;
 
-    context.only("when contract is paused", () => {
+    context("when contract is paused", () => {
       beforeEach("add box tokens to Karmic", async () => {
         const expectedAddresses = boxTokens.map((boxToken) => boxToken.address);
         const expectedUris = boxTokens.map((boxToken, idx) => `boxToken${idx}`);
@@ -444,7 +444,7 @@ describe("Karmic", () => {
     });
   });
 
-  describe.only("#bondToMint", () => {
+  describe("#bondToMint", () => {
     context("when contract is paused", () => {
       beforeEach("pause contract", async () => {
         await karmicInstance.pause();

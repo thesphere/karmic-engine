@@ -228,7 +228,6 @@ contract Badger is Ownable, ERC1155 {
         bool transferable,
         address boxToken
     ) public onlyOwner isValidString(uriId) {
-        require(boxToken != address(0), "can't be zero address");
         require(
             _isEmptyString(tokenTiers[tokenId].uriId),
             "Tier already exists for tokenId"
