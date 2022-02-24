@@ -49,7 +49,7 @@ contract Karmic is Badger, Pausable {
         whenNotPaused
         isBoxToken(token)
     {
-        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "token must be box token");
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer failed");
         bytes memory data;
         _mint(msg.sender, boxTokenTiers[token].id, amount/TOKENS_PER_ETH, data);
     }
@@ -83,7 +83,7 @@ contract Karmic is Badger, Pausable {
             boxTokenTiers[token].amount;
         boxTokenTiers[token].funds -= withdrawnFunds - withdrawnFunds*fee/FEE_PRECISION;
         boxTokenTiers[address(0)].funds -= withdrawnFunds*fee/FEE_PRECISION;
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer failed");
         Address.sendValue(payable(msg.sender), withdrawnFunds);
     }
 
@@ -95,7 +95,7 @@ contract Karmic is Badger, Pausable {
             token = boxTokens[i];
             uint256 amount = IERC20(token).balanceOf(msg.sender);
             uint256 tokenId = boxTokenTiers[token].id;
-            IERC20(token).transferFrom(msg.sender, address(this), amount);
+            require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer failed");
             _mint(msg.sender, tokenId, amount/TOKENS_PER_ETH, data);
         }
     }
