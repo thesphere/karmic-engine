@@ -13,7 +13,6 @@ contract Karmic is Badger, Pausable {
 
     uint256 public boxTokenCounter;
     uint256 public fee;
-    bool private failsafe = false;
 
     struct BoxToken {
         uint256 id;
