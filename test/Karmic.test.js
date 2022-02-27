@@ -3,7 +3,8 @@ const { parseUnits } = require("ethers/lib/utils");
 const { ethers, deployments } = require("hardhat");
 
 const NUMBER_BOX_TOKENS = 6;
-const baseUri = "http://localhost:3000/";
+const baseUri = "https://ipfs.io/ipfs/";
+const defaultTokenMetadata = 'defaultToken';
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const tokensPerEth = 1000;
 

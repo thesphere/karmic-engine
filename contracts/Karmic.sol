@@ -34,10 +34,10 @@ contract Karmic is Badger, Pausable {
         _;
     }
 
-    constructor(string memory _newBaseUri, uint256 _fee) Badger(_newBaseUri) {
+    constructor(string memory _newBaseUri, string memory _metadata, uint256 _fee) Badger(_newBaseUri) {
         boxTokenCounter = 1;
         fee = _fee;
-        createTokenTier(0, _newBaseUri, false, address(0));
+        createTokenTier(0, _metadata, false, address(0));
     }
 
     function setFee(uint256 _fee) external onlyOwner {
