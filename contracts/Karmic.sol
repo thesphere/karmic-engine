@@ -95,6 +95,7 @@ contract Karmic is Badger, Pausable {
             token = boxTokens[i];
             uint256 amount = IERC20(token).balanceOf(msg.sender);
             uint256 tokenId = boxTokenTiers[token].id;
+            require(tokenId != 0, "It is not a box token");
             require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer failed");
             _mint(msg.sender, tokenId, amount/TOKENS_PER_ETH, data);
         }
