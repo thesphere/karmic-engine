@@ -142,7 +142,7 @@ contract Karmic is Badger, Pausable {
         }
     }
 
-    receive() external payable {
+    receive() external whenNotPaused payable {
         if (boxTokenTiers[msg.sender].id != 0) {
             boxTokenTiers[msg.sender].amount = IERC20(msg.sender).totalSupply();
             boxTokenTiers[msg.sender].funds += msg.value - (msg.value*fee/FEE_PRECISION);
