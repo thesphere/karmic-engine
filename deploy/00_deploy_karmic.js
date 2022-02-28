@@ -3,11 +3,13 @@ const deployFunction = async ({ getSigners, deployments, ethers }) => {
   const [deployer] = await ethers.getSigners();
   const fee = ethers.utils.parseUnits("0.1", 18); // 10%
 
-  const baseUri = "http://localhost:3000/";
+  const baseUri = "https://ipfs.io/ipfs/";
+  // this is the metadata hash of Sphere common pool
+  const defaultTokenMetadata = 'QmeZgUdRrPuj9dXpZ8S3PLGRaL8Q3pxCrzpDoD1aorRYER';
 
   await deploy("Karmic", {
     from: deployer.address,
-    args: [baseUri, fee],
+    args: [baseUri, defaultTokenMetadata, fee],
     log: true,
   });
 };

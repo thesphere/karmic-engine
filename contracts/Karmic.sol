@@ -2,12 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "./Badger.sol";
 
-contract Karmic is Badger {
+contract Karmic is Badger, Pausable {
     uint256 public constant FEE_PRECISION = 1 ether; // 10^18 = 100%
     uint256 public constant TOKENS_PER_ETH = 1000;
+
     mapping(address => BoxToken) public boxTokenTiers;
+
     uint256 public boxTokenCounter;
     uint256 public fee;
 
@@ -31,22 +34,10 @@ contract Karmic is Badger {
         _;
     }
 
-    constructor(string memory _newBaseUri, uint256 _fee) Badger(_newBaseUri) {
+    constructor(string memory _newBaseUri, string memory _metadata, uint256 _fee) Badger(_newBaseUri) {
         boxTokenCounter = 1;
         fee = _fee;
-        createTokenTier(0, _newBaseUri, false, address(0));
-    }
-
-    receive() external payable {
-        if (boxTokenTiers[msg.sender].id != 0) {
-            boxTokenTiers[msg.sender].amount = IERC20(msg.sender).totalSupply();
-            boxTokenTiers[msg.sender].funds += msg.value - (msg.value*fee/FEE_PRECISION);
-            boxTokenTiers[address(0)].funds += (msg.value*fee/FEE_PRECISION);
-        } else {
-            bytes memory data;
-            boxTokenTiers[address(0)].funds += msg.value;
-            _mint(msg.sender, 0, msg.value, data);
-        }
+        createTokenTier(0, _metadata, false, address(0));
     }
 
     function setFee(uint256 _fee) external onlyOwner {
@@ -55,9 +46,10 @@ contract Karmic is Badger {
 
     function bondToMint(address token, uint256 amount)
         public
+        whenNotPaused
         isBoxToken(token)
     {
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer failed");
         bytes memory data;
         _mint(msg.sender, boxTokenTiers[token].id, amount/TOKENS_PER_ETH, data);
     }
@@ -81,14 +73,7 @@ contract Karmic is Badger {
         boxTokenCounter = counter;
     }
 
-    function getBoxTokens() public view returns (address[] memory boxTokens) {
-        boxTokens = new address[](boxTokenCounter);
-        for (uint8 i = 1; i <= boxTokenCounter; i++) {
-            boxTokens[i - 1] = tokenTiers[i].boxToken;
-        }
-    }
-
-    function withdraw(address token, uint256 amount) external isBoxToken(token) {
+    function withdraw(address token, uint256 amount) external whenNotPaused isBoxToken(token) {
         uint256 totalFunding = (boxTokenTiers[token].funds*FEE_PRECISION) / (FEE_PRECISION - fee);
         require(
             !(totalFunding >= boxTokenTiers[token].threshold),
@@ -98,11 +83,11 @@ contract Karmic is Badger {
             boxTokenTiers[token].amount;
         boxTokenTiers[token].funds -= withdrawnFunds - withdrawnFunds*fee/FEE_PRECISION;
         boxTokenTiers[address(0)].funds -= withdrawnFunds*fee/FEE_PRECISION;
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer failed");
         Address.sendValue(payable(msg.sender), withdrawnFunds);
     }
 
-    function claimGovernanceTokens(address[] memory boxTokens) external {
+    function claimGovernanceTokens(address[] memory boxTokens) external whenNotPaused {
         bytes memory data;
 
         address token;
@@ -110,7 +95,8 @@ contract Karmic is Badger {
             token = boxTokens[i];
             uint256 amount = IERC20(token).balanceOf(msg.sender);
             uint256 tokenId = boxTokenTiers[token].id;
-            IERC20(token).transferFrom(msg.sender, address(this), amount);
+            require(tokenId != 0, "It is not a box token");
+            require(IERC20(token).transferFrom(msg.sender, address(this), amount), "transfer failed");
             _mint(msg.sender, tokenId, amount/TOKENS_PER_ETH, data);
         }
     }
@@ -131,6 +117,21 @@ contract Karmic is Badger {
         emit FundsDistributed(_receiver, _tier, _amount);
     }
 
+    function pause() external onlyOwner {
+        _pause();
+    }
+
+    function unpause() external onlyOwner {
+        _unpause();
+    }
+
+    function getBoxTokens() public view returns (address[] memory boxTokens) {
+        boxTokens = new address[](boxTokenCounter);
+        for (uint8 i = 1; i <= boxTokenCounter; i++) {
+            boxTokens[i - 1] = tokenTiers[i].boxToken;
+        }
+    }
+
     function allBalancesOf(address holder)
         external
         view
@@ -139,6 +140,18 @@ contract Karmic is Badger {
         balances = new uint256[](boxTokenCounter);
         for (uint8 i; i < boxTokenCounter; i++) {
             balances[i] = balanceOf(holder, i);
+        }
+    }
+
+    receive() external whenNotPaused payable {
+        if (boxTokenTiers[msg.sender].id != 0) {
+            boxTokenTiers[msg.sender].amount = IERC20(msg.sender).totalSupply();
+            boxTokenTiers[msg.sender].funds += msg.value - (msg.value*fee/FEE_PRECISION);
+            boxTokenTiers[address(0)].funds += (msg.value*fee/FEE_PRECISION);
+        } else {
+            bytes memory data;
+            boxTokenTiers[address(0)].funds += msg.value;
+            _mint(msg.sender, 0, msg.value, data);
         }
     }
 }
