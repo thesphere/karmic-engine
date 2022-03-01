@@ -1,11 +1,11 @@
 const deployFunction = async ({ getSigners, deployments, ethers }) => {
   const { deploy } = deployments;
   const [deployer] = await ethers.getSigners();
-  const fee = ethers.utils.parseUnits("0.1", 18); // 10%
+  const fee = ethers.utils.parseUnits("0.4", 18); // 40%
 
   const baseUri = "ipfs://";
   // this is the metadata hash of Sphere common pool
-  const defaultTokenMetadata = 'QmeZgUdRrPuj9dXpZ8S3PLGRaL8Q3pxCrzpDoD1aorRYER';
+  const defaultTokenMetadata = '';
 
   await deploy("Karmic", {
     from: deployer.address,
