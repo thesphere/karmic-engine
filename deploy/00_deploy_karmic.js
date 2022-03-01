@@ -5,7 +5,7 @@ const deployFunction = async ({ getSigners, deployments, ethers }) => {
 
   const baseUri = "ipfs://";
   // this is the metadata hash of Sphere common pool
-  const defaultTokenMetadata = '';
+  const defaultTokenMetadata = ' ';
 
   await deploy("Karmic", {
     from: deployer.address,
