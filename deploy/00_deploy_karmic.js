@@ -3,7 +3,7 @@ const deployFunction = async ({ getSigners, deployments, ethers }) => {
   const [deployer] = await ethers.getSigners();
   const fee = ethers.utils.parseUnits("0.1", 18); // 10%
 
-  const baseUri = "https://ipfs.io/ipfs/";
+  const baseUri = "ipfs://";
   // this is the metadata hash of Sphere common pool
   const defaultTokenMetadata = 'QmeZgUdRrPuj9dXpZ8S3PLGRaL8Q3pxCrzpDoD1aorRYER';
 
